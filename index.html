@@ -1,0 +1,4002 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SynOps - Ouverture tactique</title>
+  <style>
+    :root {
+      --cyan: #5bdcff;
+      --green: #5ee48b;
+      --orange: #ff9d36;
+      --purple: #aa76ff;
+      --sand: #ffd08a;
+      --text: #f7fbff;
+      --muted: #b8c3cf;
+      --panel: rgba(3, 8, 14, .54);
+      --line: rgba(91, 220, 255, .34);
+      --font: Inter, Avenir Next, Segoe UI, system-ui, sans-serif;
+      --mono: SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #020407;
+      color: var(--text);
+      font-family: var(--font);
+    }
+
+    button { font: inherit; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .scene {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      isolation: isolate;
+      background:
+        linear-gradient(90deg, rgba(0, 0, 0, .36), rgba(0, 0, 0, .03) 48%, rgba(0, 0, 0, .28)),
+        linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .02) 58%, rgba(0, 0, 0, .28)),
+        url("assets/sahel-poste-avance.png") center / cover no-repeat;
+    }
+
+    .scene::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at 63% 64%, rgba(91, 220, 255, .12), transparent 18%),
+        radial-gradient(circle at 31% 43%, rgba(255, 157, 54, .13), transparent 24%),
+        linear-gradient(180deg, transparent 0 68%, rgba(0, 0, 0, .28));
+    }
+
+    .dust { display: none; }
+
+    .logo {
+      position: absolute;
+      z-index: 8;
+      top: 28px;
+      left: 34px;
+      height: 38px;
+      filter: drop-shadow(0 0 14px rgba(91, 220, 255, .35));
+    }
+
+    .badge {
+      position: absolute;
+      z-index: 8;
+      top: 30px;
+      right: 34px;
+      color: var(--cyan);
+      text-align: right;
+      font: 800 clamp(10px, 1vw, 13px) / 1.55 var(--mono);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      text-shadow: 0 0 14px rgba(91, 220, 255, .32);
+    }
+
+    .opening-title {
+      position: absolute;
+      z-index: 6;
+      left: 7vw;
+      bottom: 16vh;
+      width: min(780px, 60vw);
+      opacity: 1;
+      transform: translateY(0);
+      transition: .65s ease;
+    }
+
+    .scene[data-step="1"] .opening-title,
+    .scene[data-step="2"] .opening-title,
+    .scene[data-step="3"] .opening-title {
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+    }
+
+    .kicker {
+      margin: 0 0 12px;
+      color: var(--cyan);
+      font: 900 clamp(11px, 1vw, 14px) / 1.5 var(--mono);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(64px, 8vw, 138px);
+      line-height: .82;
+      letter-spacing: 0;
+      text-shadow: 0 10px 44px rgba(0, 0, 0, .65);
+    }
+
+    .subtitle {
+      margin-top: 14px;
+      max-width: 640px;
+      font-size: clamp(24px, 2.7vw, 48px);
+      line-height: 1.04;
+      font-weight: 950;
+      text-shadow: 0 8px 34px rgba(0, 0, 0, .72);
+    }
+
+    .opening-line {
+      margin-top: 22px;
+      color: #e7edf4;
+      font-size: clamp(16px, 1.35vw, 22px);
+      white-space: nowrap;
+      text-shadow: 0 4px 22px rgba(0, 0, 0, .72);
+    }
+
+    .hud-anchor,
+    .signal,
+    .mission {
+      position: absolute;
+      z-index: 7;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(14px);
+      filter: blur(5px);
+      transition: .6s ease;
+    }
+
+    .scene[data-step="1"] .hud-anchor,
+    .scene[data-step="2"] .signal,
+    .scene[data-step="3"] .mission {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+
+    .hud-card,
+    .signal-card {
+      position: relative;
+      min-width: 190px;
+      padding: 12px 14px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      box-shadow: 0 0 22px rgba(0, 0, 0, .28);
+      backdrop-filter: blur(8px);
+    }
+
+    .hud-card::after {
+      content: "";
+      position: absolute;
+      width: var(--line-w, 110px);
+      height: 1px;
+      background: linear-gradient(90deg, currentColor, transparent);
+      opacity: .75;
+      transform: rotate(var(--line-r, 0deg));
+      transform-origin: left center;
+      left: var(--line-x, 100%);
+      top: var(--line-y, 50%);
+    }
+
+    .hud-label,
+    .signal-src {
+      color: var(--muted);
+      font: 900 11px var(--mono);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .hud-value {
+      margin-top: 7px;
+      font-size: clamp(20px, 1.7vw, 30px);
+      font-weight: 950;
+    }
+
+    .network {
+      left: 8vw;
+      top: 28vh;
+      color: var(--orange);
+      transition-delay: .05s;
+    }
+
+    .network .hud-card { --line-w: 120px; --line-r: 22deg; --line-y: 58%; }
+
+    .energy {
+      left: 38vw;
+      bottom: 28vh;
+      color: var(--sand);
+      transition-delay: .18s;
+    }
+
+    .energy .hud-card { --line-w: 92px; --line-r: -34deg; --line-y: 25%; }
+
+    .tactical {
+      right: 8vw;
+      top: 34vh;
+      color: var(--cyan);
+      transition-delay: .31s;
+    }
+
+    .tactical .hud-card { --line-w: 115px; --line-r: 160deg; --line-x: 0; --line-y: 64%; }
+
+    .terrain-line {
+      position: absolute;
+      z-index: 7;
+      left: 50%;
+      bottom: 11vh;
+      width: min(720px, 82vw);
+      transform: translate(-50%, 16px);
+      opacity: 0;
+      color: #f6fbff;
+      font-size: clamp(24px, 2.4vw, 44px);
+      line-height: 1.08;
+      font-weight: 950;
+      text-align: center;
+      text-shadow: 0 8px 36px rgba(0, 0, 0, .75);
+      transition: .65s ease .28s;
+    }
+
+    .scene[data-step="1"] .terrain-line {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .signal {
+      width: min(390px, 31vw);
+      color: var(--cyan);
+    }
+
+    .scene[data-step="2"] .signal {
+      animation: flashIn .75s ease forwards, signalPulse 2.4s ease-in-out infinite;
+    }
+
+    .drone { left: 9vw; top: 23vh; transition-delay: .05s; }
+    .terre { right: 7vw; top: 26vh; color: var(--green); transition-delay: .25s; }
+    .allies { left: 17vw; bottom: 20vh; color: var(--purple); transition-delay: .45s; }
+    .sigint { right: 12vw; bottom: 18vh; color: var(--orange); transition-delay: .65s; }
+
+    @keyframes flashIn {
+      0% { opacity: 0; filter: blur(7px); transform: translateY(16px) scale(.96); }
+      45% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1.03); }
+      100% { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); }
+    }
+
+    @keyframes signalPulse {
+      0%, 100% { box-shadow: none; }
+      50% { filter: drop-shadow(0 0 15px currentColor); }
+    }
+
+    .signal-card {
+      border-left: 3px solid currentColor;
+      min-height: 112px;
+      padding: 18px 22px;
+    }
+
+    .signal-term {
+      margin-top: 9px;
+      color: #f4f9ff;
+      font: 900 clamp(16px, 1.35vw, 22px) / 1.3 var(--mono);
+      overflow-wrap: anywhere;
+    }
+
+    .signal-dot {
+      position: absolute;
+      top: 13px;
+      right: 13px;
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 15px currentColor;
+    }
+
+    .mission {
+      left: 50%;
+      top: 50%;
+      width: min(860px, 82vw);
+      transform: translate(-50%, -42%);
+      text-align: center;
+    }
+
+    .scene[data-step="3"] .mission {
+      transform: translate(-50%, -50%);
+    }
+
+    .mission-kicker {
+      color: var(--cyan);
+      font: 950 13px var(--mono);
+      letter-spacing: 4px;
+      text-transform: uppercase;
+    }
+
+    .mission-main {
+      margin-top: 16px;
+      padding: 22px 26px;
+      background: rgba(2, 8, 15, .66);
+      border: 1px solid rgba(91, 220, 255, .38);
+      border-radius: 8px;
+      font-size: clamp(27px, 3vw, 54px);
+      line-height: 1.08;
+      font-weight: 950;
+      box-shadow: 0 0 42px rgba(0, 0, 0, .26), inset 0 0 22px rgba(91, 220, 255, .04);
+      backdrop-filter: blur(10px);
+    }
+
+    .mission-bottom {
+      margin-top: 18px;
+      color: var(--sand);
+      font: 900 clamp(14px, 1.2vw, 18px) / 1.5 var(--mono);
+      letter-spacing: 1px;
+      text-shadow: 0 5px 22px rgba(0, 0, 0, .7);
+    }
+
+    .controls {
+      position: fixed;
+      z-index: 20;
+      left: 50%;
+      bottom: 30px;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .dots {
+      display: flex;
+      gap: 8px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, .34);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, .45);
+      background: rgba(255, 255, 255, .08);
+    }
+
+    .dot.active {
+      background: var(--cyan);
+      border-color: var(--cyan);
+      box-shadow: 0 0 12px var(--cyan);
+    }
+
+    .nav-btn {
+      min-height: 46px;
+      padding: 0 20px;
+      border: 1px solid rgba(91, 220, 255, .42);
+      border-radius: 4px;
+      background: rgba(3, 12, 20, .72);
+      color: var(--cyan);
+      font-weight: 950;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+    }
+
+    .nav-btn:hover {
+      background: rgba(91, 220, 255, .14);
+    }
+
+    .nav-btn.back {
+      display: none;
+      min-width: 56px;
+      color: var(--muted);
+      border-color: rgba(255, 255, 255, .18);
+    }
+
+    .scene[data-step="1"] .nav-btn.back,
+    .scene[data-step="2"] .nav-btn.back,
+    .scene[data-step="3"] .nav-btn.back {
+      display: block;
+    }
+
+    @media (max-width: 900px) {
+      .scene {
+        overflow-y: auto;
+        background-position: 70% center;
+      }
+
+      .badge { display: none; }
+      .logo { top: 18px; left: 50%; height: 32px; transform: translateX(-50%); }
+      .opening-title { left: 18px; right: 18px; bottom: 18vh; width: auto; text-align: center; }
+      h1 { font-size: clamp(54px, 16vw, 86px); }
+      .subtitle { font-size: clamp(22px, 7vw, 34px); }
+      .opening-line { white-space: normal; font-size: 15px; }
+      .hud-anchor { position: relative; inset: auto; width: 100%; margin: 0 auto 10px; }
+      .hud-card { min-width: 0; }
+      .hud-card::after { display: none; }
+      .scene[data-step="1"] { display: block; }
+      .scene[data-step="1"] .hud-anchor { left: auto; top: auto; right: auto; bottom: auto; }
+      .scene[data-step="1"] .network { margin-top: 96px; }
+      .scene[data-step="1"] .energy,
+      .scene[data-step="1"] .tactical { margin-top: 10px; }
+      .scene[data-step="1"] .terrain-line { position: relative; left: auto; bottom: auto; width: auto; transform: none; margin: 20px 18px 120px; font-size: 22px; }
+      .signal { position: relative; inset: auto; width: auto; margin: 0 18px 10px; }
+      .signal-card { min-height: 0; padding: 14px 16px; }
+      .signal-term { font-size: 14px; }
+      .scene[data-step="2"] .drone { margin-top: 96px; }
+      .mission { width: auto; left: 18px; right: 18px; top: 46%; transform: translateY(-46%); }
+      .scene[data-step="3"] .mission { transform: translateY(-50%); }
+      .mission-main { padding: 18px; font-size: clamp(24px, 8vw, 38px); }
+      .controls { left: 14px; right: 14px; bottom: 18px; transform: none; }
+      .dots { display: none; }
+      .nav-btn { flex: 1; min-height: 48px; padding: 0 12px; font-size: 13px; }
+      .nav-btn.back { flex: 0 0 56px; min-width: 56px; }
+    }
+
+    .tech-page {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 44% 42%, rgba(255, 157, 54, .08), transparent 28%),
+        linear-gradient(180deg, rgba(2, 8, 15, .98), rgba(2, 6, 11, .96)),
+        url("assets/fond.png") center / cover no-repeat;
+    }
+
+    .tech-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(91, 220, 255, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .035) 1px, transparent 1px);
+      background-size: 58px 58px;
+    }
+
+    .tech-shell {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: grid;
+      grid-template-columns: minmax(560px, 1.04fr) minmax(560px, .96fr);
+      gap: 18px;
+    }
+
+    .tech-left,
+    .console {
+      min-height: 0;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 10px;
+      background: rgba(4, 10, 18, .72);
+      box-shadow: 0 0 34px rgba(0, 0, 0, .28);
+      backdrop-filter: blur(10px);
+    }
+
+    .tech-left {
+      display: grid;
+      grid-template-rows: 1fr auto auto;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .map-stage {
+      position: relative;
+      min-height: 0;
+      overflow: hidden;
+      border: 1px solid rgba(255, 157, 54, .34);
+      border-radius: 8px;
+      background: #020509;
+    }
+
+    .map-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(.74) saturate(.96);
+    }
+
+    .map-stage::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(circle at 50% 50%, transparent 18%, rgba(0, 0, 0, .35) 72%);
+    }
+
+    .map-pulse {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(38vw, 420px);
+      aspect-ratio: 1;
+      border: 2px solid var(--orange);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 28px rgba(255, 157, 54, .52), inset 0 0 24px rgba(255, 157, 54, .16);
+      animation: bPulse 1.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes bPulse {
+      0%, 100% { opacity: .62; transform: translate(-50%, -50%) scale(.98); }
+      50% { opacity: 1; transform: translate(-50%, -50%) scale(1.04); }
+    }
+
+    .tech-message {
+      position: absolute;
+      width: min(430px, 38%);
+      padding: 0;
+      border: 1px solid rgba(255, 255, 255, .12);
+      border-left: 4px solid currentColor;
+      border-radius: 6px;
+      background: rgba(5, 12, 24, .83);
+      color: var(--cyan);
+      opacity: .52;
+      transition: .22s ease;
+      z-index: 2;
+      overflow: hidden;
+    }
+
+    .tech-message.active {
+      opacity: 1;
+      transform: translateY(-3px);
+      box-shadow: 0 0 26px color-mix(in srgb, currentColor 34%, transparent);
+    }
+
+    .message-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 16px;
+      border-bottom: 1px solid rgba(255, 255, 255, .1);
+      background: rgba(8, 18, 36, .62);
+    }
+
+    .message-head strong {
+      display: block;
+      font-size: clamp(18px, 1.35vw, 23px);
+    }
+
+    .message-time {
+      color: var(--muted);
+      font: 900 clamp(12px, .78vw, 14px) var(--mono);
+      white-space: nowrap;
+    }
+
+    .message-body {
+      padding: 14px 16px 16px;
+      color: #f4f9ff;
+      font: 900 clamp(13px, .88vw, 15px) / 1.48 var(--mono);
+      overflow-wrap: anywhere;
+    }
+
+    .message-body .label { color: #d7e3ef; }
+    .message-body .value { color: var(--orange); }
+
+    .m-drone { left: 18px; top: 18px; }
+    .m-terre { right: 18px; top: 30px; color: var(--green); }
+    .m-allies { left: 48px; bottom: 28px; color: var(--purple); }
+    .m-sigint { right: 42px; bottom: 32px; color: var(--orange); }
+
+    .buffer-arrow {
+      display: grid;
+      place-items: center;
+      color: var(--orange);
+      font: 900 26px var(--mono);
+      min-height: 24px;
+    }
+
+    .buffer {
+      padding: 15px 16px;
+      border: 1px solid rgba(255, 157, 54, .32);
+      border-radius: 8px;
+      background: rgba(255, 157, 54, .07);
+    }
+
+    .buffer h3,
+    .console h2 {
+      margin: 0;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: var(--mono);
+    }
+
+    .buffer h3 { color: var(--orange); font-size: 14px; }
+    .buffer p { margin: 8px 0 0; color: #f6e0c2; font-weight: 800; }
+    .buffer .zero { margin-top: 8px; color: var(--muted); font: 800 12px / 1.4 var(--mono); }
+
+    .console {
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 14px;
+    }
+
+    .console-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+    }
+
+    .console h2 {
+      color: var(--cyan);
+      font-size: clamp(17px, 1.3vw, 24px);
+    }
+
+    .console-page-back {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(255, 255, 255, .16);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .03);
+      color: var(--muted);
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .console-indicators {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+
+    .indicator {
+      padding: 10px 11px;
+      border: 1px solid rgba(91, 220, 255, .16);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, .18);
+    }
+
+    .indicator span {
+      display: block;
+      color: var(--muted);
+      font: 800 10px var(--mono);
+      letter-spacing: 1.3px;
+      text-transform: uppercase;
+    }
+
+    .indicator strong {
+      display: block;
+      margin-top: 5px;
+      color: #f5f9ff;
+      font-size: 15px;
+    }
+
+    .step-panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto auto minmax(150px, 1fr) auto;
+      gap: 11px;
+      padding: 15px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 8px;
+      background: rgba(2, 7, 14, .55);
+      overflow: hidden;
+    }
+
+    .step-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--muted);
+      font: 900 12px var(--mono);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .step-badge {
+      display: inline-flex;
+      padding: 6px 10px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--orange);
+      background: rgba(255, 157, 54, .08);
+    }
+
+    .step-text {
+      margin: 0;
+      color: #d9e5f0;
+      font-size: clamp(17px, 1.05vw, 20px);
+      line-height: 1.38;
+      font-weight: 750;
+    }
+
+    .result {
+      min-height: 150px;
+      overflow: auto;
+      padding: 14px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, .26);
+      border: 1px solid rgba(91, 220, 255, .12);
+      font: 850 clamp(15px, .96vw, 17px) / 1.55 var(--mono);
+      color: #eef6ff;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .result-col {
+      padding: 10px;
+      border-radius: 5px;
+      background: rgba(255, 255, 255, .035);
+      border: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .result-col b {
+      display: block;
+      margin-bottom: 6px;
+      color: var(--cyan);
+    }
+
+    .result-list {
+      margin: 0;
+      padding-left: 1.1em;
+      font: 850 clamp(13px, .84vw, 15px) / 1.38 var(--mono);
+    }
+
+    .result-list li + li {
+      margin-top: 3px;
+    }
+
+    .journal {
+      min-height: 168px;
+      max-height: 176px;
+      overflow: auto;
+      padding: 8px 11px;
+      border-left: 2px solid var(--green);
+      background: rgba(94, 228, 139, .07);
+      color: #d9ffe8;
+      font: 850 11px / 1.4 var(--mono);
+    }
+
+    .journal-line + .journal-line {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(94, 228, 139, .14);
+    }
+
+    .console-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.3fr;
+      gap: 9px;
+    }
+
+    .console-btn,
+    .qa-btn {
+      min-height: 42px;
+      border: 1px solid rgba(91, 220, 255, .28);
+      border-radius: 4px;
+      background: rgba(91, 220, 255, .06);
+      color: var(--cyan);
+      font-size: 15px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .console-btn:hover,
+    .qa-btn:hover,
+    .qa-btn.active {
+      background: rgba(91, 220, 255, .15);
+    }
+
+    .qa {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+    }
+
+    .qa-panel {
+      min-height: 82px;
+      padding: 14px 15px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 6px;
+      background: rgba(0, 0, 0, .2);
+      color: #d9e6f2;
+      font: 800 clamp(14px, .95vw, 16px) / 1.55 var(--mono);
+    }
+
+    .llm-page {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 18% 42%, rgba(255, 157, 54, .18), transparent 28%),
+        radial-gradient(circle at 58% 48%, rgba(91, 220, 255, .12), transparent 24%),
+        linear-gradient(180deg, rgba(2, 6, 12, .98), rgba(3, 8, 15, .97)),
+        url("assets/fond.png") center / cover no-repeat;
+    }
+
+    .llm-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 157, 54, .04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .035) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: linear-gradient(180deg, #000, transparent 88%);
+    }
+
+    .llm-shell {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+    }
+
+    .llm-head {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 18px;
+    }
+
+    .llm-head h2 {
+      margin: 0;
+      color: var(--cyan);
+      font-size: clamp(28px, 2.6vw, 52px);
+      line-height: 1;
+      letter-spacing: 2px;
+    }
+
+    .llm-head p {
+      margin: 10px 0 0;
+      max-width: 840px;
+      color: #dce7f2;
+      font-size: clamp(15px, 1vw, 19px);
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .llm-back {
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid rgba(255, 255, 255, .18);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .04);
+      color: var(--muted);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .llm-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(300px, .86fr) minmax(420px, 1.12fr) minmax(360px, 1fr);
+      gap: 16px;
+    }
+
+    .llm-panel {
+      min-height: 0;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 10px;
+      background: rgba(3, 9, 17, .78);
+      box-shadow: 0 0 34px rgba(0, 0, 0, .26);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .llm-panel h3 {
+      margin: 0;
+      padding: 16px 18px 0;
+      color: var(--cyan);
+      font: 950 clamp(16px, 1.2vw, 22px) var(--mono);
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .signal-stack,
+    .out-stack {
+      display: grid;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .ambiguity-card,
+    .answer-card,
+    .pivot-card,
+    .llm-box {
+      border: 1px solid rgba(255, 157, 54, .32);
+      border-radius: 8px;
+      background: rgba(255, 157, 54, .07);
+    }
+
+    .ambiguity-card {
+      padding: 14px;
+      opacity: .56;
+      transition: .24s ease;
+    }
+
+    .ambiguity-card.active {
+      opacity: 1;
+      transform: translateX(4px);
+      box-shadow: 0 0 28px rgba(255, 157, 54, .22);
+    }
+
+    .ambiguity-top,
+    .answer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .ambiguity-title,
+    .answer-title {
+      font-size: clamp(19px, 1.3vw, 25px);
+      font-weight: 950;
+    }
+
+    .alert-badge,
+    .mim-badge {
+      display: inline-flex;
+      padding: 6px 9px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--orange);
+      background: rgba(255, 157, 54, .08);
+      font: 950 10px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .field-list {
+      margin: 0;
+      color: #f4f8ff;
+      font: 850 clamp(12px, .86vw, 15px) / 1.5 var(--mono);
+    }
+
+    .field-list dt {
+      display: inline;
+      color: var(--muted);
+    }
+
+    .field-list dd {
+      display: inline;
+      margin: 0;
+    }
+
+    .field-list dd::after {
+      content: "";
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .llm-core {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 12px;
+      padding: 16px;
+    }
+
+    .llm-core-title {
+      display: grid;
+      gap: 4px;
+      align-content: start;
+    }
+
+    .llm-core-title-main {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .llm-core-title h3 {
+      padding: 0;
+      text-transform: uppercase;
+    }
+
+    .llm-core-title span {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .llm-core-title .llm-warning {
+      color: var(--sand);
+      font: 900 12px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .llm-limits {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .llm-box {
+      min-height: 0;
+      padding: 14px;
+      border-color: rgba(91, 220, 255, .24);
+      background: rgba(91, 220, 255, .055);
+    }
+
+    .llm-box h4 {
+      margin: 0 0 9px;
+      color: var(--cyan);
+      font-size: 15px;
+    }
+
+    .llm-box ul {
+      margin: 0;
+      padding-left: 1.1em;
+      color: #eaf4ff;
+      font: 850 clamp(12px, .82vw, 14px) / 1.42 var(--mono);
+    }
+
+    .llm-box li + li {
+      margin-top: 3px;
+    }
+
+    .question-box {
+      position: relative;
+      min-height: 0;
+      display: grid;
+      align-content: start;
+      padding: 18px 18px 14px;
+      border: 1px solid rgba(255, 157, 54, .42);
+      border-radius: 10px;
+      background:
+        radial-gradient(circle at 50% 0, rgba(255, 157, 54, .16), transparent 44%),
+        rgba(2, 6, 12, .74);
+      box-shadow: inset 0 0 32px rgba(255, 157, 54, .04);
+      overflow: hidden;
+    }
+
+    .question-label {
+      color: var(--orange);
+      font: 950 12px var(--mono);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .question-text {
+      margin-top: 12px;
+      color: #fff6e8;
+      font: 900 clamp(15px, 1.06vw, 20px) / 1.52 var(--mono);
+    }
+
+    .question-text strong {
+      color: var(--cyan);
+    }
+
+    .pivot-center {
+      color: #fff6e8;
+      font: 900 clamp(11px, .74vw, 13px) / 1.32 var(--mono);
+    }
+
+    .pivot-center-title {
+      color: var(--green);
+      font-size: clamp(15px, 1vw, 19px);
+      line-height: 1.15;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      overflow-wrap: anywhere;
+    }
+
+    .pivot-center-section {
+      margin-top: 8px;
+      color: var(--sand);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .pivot-center strong {
+      color: var(--cyan);
+    }
+
+    .pivot-center .mim-line {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid rgba(94, 228, 139, .22);
+      color: #eafff0;
+    }
+
+    .answer-card {
+      padding: 14px;
+      opacity: .44;
+      transition: .24s ease;
+    }
+
+    .answer-card.active {
+      opacity: 1;
+      box-shadow: 0 0 26px rgba(91, 220, 255, .16);
+      border-color: rgba(91, 220, 255, .34);
+      background: rgba(91, 220, 255, .07);
+    }
+
+    .score {
+      color: var(--sand);
+      font: 950 clamp(28px, 2.2vw, 44px) var(--mono);
+    }
+
+    .answer-lines {
+      margin: 0;
+      padding-left: 1.1em;
+      color: #eef7ff;
+      font: 850 clamp(12px, .85vw, 15px) / 1.42 var(--mono);
+    }
+
+    .pivot-card {
+      padding: 16px;
+      border-color: rgba(91, 220, 255, .28);
+      background: rgba(0, 0, 0, .24);
+      opacity: .55;
+      transition: .24s ease;
+    }
+
+    .pivot-card.active {
+      opacity: 1;
+      box-shadow: 0 0 34px rgba(94, 228, 139, .15);
+      border-color: rgba(94, 228, 139, .44);
+    }
+
+    .pivot-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      color: var(--green);
+      font: 950 clamp(15px, 1vw, 18px) var(--mono);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .pivot-copy {
+      margin: 10px 0 12px;
+      color: #eaf4ff;
+      font-weight: 850;
+      line-height: 1.35;
+    }
+
+    .pivot-data {
+      color: #f5fbff;
+      font: 850 clamp(12px, .82vw, 14px) / 1.45 var(--mono);
+    }
+
+    .pivot-data strong {
+      color: var(--cyan);
+    }
+
+    .human-note {
+      padding: 14px 16px;
+      border: 1px solid rgba(94, 228, 139, .3);
+      border-radius: 8px;
+      background: rgba(94, 228, 139, .08);
+      color: #eafff0;
+      text-align: center;
+      font-size: clamp(18px, 1.3vw, 24px);
+      font-weight: 950;
+    }
+
+    .llm-bottom {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .llm-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .llm-btn {
+      min-height: 42px;
+      padding: 0 15px;
+      border: 1px solid rgba(91, 220, 255, .3);
+      border-radius: 4px;
+      background: rgba(91, 220, 255, .06);
+      color: var(--cyan);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .llm-btn.active,
+    .llm-btn:hover {
+      background: rgba(91, 220, 255, .16);
+    }
+
+    .llm-next {
+      min-height: 44px;
+      padding: 0 18px;
+      border: 1px solid rgba(255, 157, 54, .48);
+      border-radius: 4px;
+      background: rgba(255, 157, 54, .12);
+      color: var(--sand);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .llm-log {
+      grid-column: 1 / -1;
+      min-height: 40px;
+      max-height: 76px;
+      overflow: auto;
+      padding: 9px 12px;
+      border-left: 2px solid var(--orange);
+      background: rgba(255, 157, 54, .075);
+      color: #ffe8c8;
+      font: 850 12px / 1.45 var(--mono);
+    }
+
+    .llm-log-line + .llm-log-line {
+      margin-top: 3px;
+    }
+
+    .grist-page {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 49% 46%, rgba(94, 228, 139, .11), transparent 24%),
+        radial-gradient(circle at 76% 34%, rgba(255, 157, 54, .09), transparent 26%),
+        linear-gradient(180deg, rgba(2, 6, 12, .98), rgba(3, 8, 15, .97)),
+        url("assets/fond.png") center / cover no-repeat;
+    }
+
+    .grist-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(94, 228, 139, .035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .03) 1px, transparent 1px);
+      background-size: 56px 56px;
+    }
+
+    .grist-shell {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 15px;
+    }
+
+    .grist-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+    }
+
+    .grist-head h2 {
+      margin: 0;
+      color: var(--cyan);
+      font-size: clamp(28px, 2.5vw, 50px);
+      line-height: 1;
+      letter-spacing: 1px;
+    }
+
+    .grist-head p {
+      margin: 9px 0 0;
+      max-width: 880px;
+      color: #dce7f2;
+      font-size: clamp(15px, 1vw, 19px);
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .grist-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(270px, .72fr) minmax(640px, 1.5fr) minmax(300px, .78fr);
+      gap: 16px;
+    }
+
+    .grist-panel {
+      min-height: 0;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 10px;
+      background: rgba(3, 9, 17, .78);
+      box-shadow: 0 0 34px rgba(0, 0, 0, .26);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .grist-panel h3 {
+      margin: 0;
+      padding: 16px 18px 0;
+      color: var(--cyan);
+      font: 950 clamp(15px, 1vw, 20px) var(--mono);
+      letter-spacing: 1.7px;
+      text-transform: uppercase;
+    }
+
+    .pivot-received,
+    .ref-panel {
+      padding: 18px;
+    }
+
+    .pivot-received-title {
+      color: var(--green);
+      font: 950 clamp(16px, 1vw, 20px) var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .pivot-received-meta {
+      margin-top: 14px;
+      color: #f5fbff;
+      font: 850 clamp(12px, .82vw, 14px) / 1.55 var(--mono);
+    }
+
+    .pivot-received-meta strong {
+      color: var(--cyan);
+    }
+
+    .received-list,
+    .ref-list {
+      margin: 16px 0 0;
+      padding-left: 1.1em;
+      color: #eef7ff;
+      font: 850 clamp(12px, .86vw, 15px) / 1.5 var(--mono);
+    }
+
+    .received-list li + li,
+    .ref-list li + li {
+      margin-top: 7px;
+    }
+
+    .grist-table-wrap {
+      padding: 16px;
+      height: 100%;
+      overflow: auto;
+    }
+
+    .grist-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0 9px;
+      font-size: clamp(12px, .78vw, 14px);
+    }
+
+    .grist-table th {
+      padding: 0 10px 6px;
+      color: var(--muted);
+      text-align: left;
+      font: 950 11px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .grist-table td {
+      padding: 12px 10px;
+      border-top: 1px solid rgba(91, 220, 255, .16);
+      border-bottom: 1px solid rgba(91, 220, 255, .16);
+      background: rgba(6, 17, 30, .72);
+      color: #ecf6ff;
+      font-weight: 820;
+      vertical-align: top;
+    }
+
+    .grist-table td:first-child {
+      border-left: 1px solid rgba(91, 220, 255, .16);
+      border-radius: 7px 0 0 7px;
+      font-weight: 950;
+    }
+
+    .grist-table td:last-child {
+      border-right: 1px solid rgba(91, 220, 255, .16);
+      border-radius: 0 7px 7px 0;
+    }
+
+    .grist-table tr.validated td {
+      border-color: rgba(94, 228, 139, .48);
+      background: rgba(94, 228, 139, .1);
+    }
+
+    .grist-table tr.review td {
+      border-color: rgba(255, 157, 54, .5);
+      background: rgba(255, 157, 54, .1);
+    }
+
+    .grist-table tr.hold td {
+      border-color: rgba(255, 111, 82, .52);
+      background: rgba(255, 111, 82, .1);
+    }
+
+    .grist-table tr.selected td {
+      border-color: rgba(91, 220, 255, .55);
+      background: rgba(91, 220, 255, .1);
+      box-shadow: inset 0 0 18px rgba(91, 220, 255, .035);
+    }
+
+    .score-pill,
+    .status-pill {
+      display: inline-flex;
+      padding: 5px 8px;
+      border: 1px solid rgba(91, 220, 255, .24);
+      border-radius: 999px;
+      color: var(--sand);
+      background: rgba(0, 0, 0, .2);
+      font: 950 12px var(--mono);
+      white-space: nowrap;
+    }
+
+    .status-pill {
+      color: #dce7f2;
+      white-space: normal;
+    }
+
+    .dossier-btn {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 1px solid rgba(91, 220, 255, .32);
+      border-radius: 4px;
+      background: rgba(91, 220, 255, .08);
+      color: var(--cyan);
+      font-weight: 950;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .dossier-btn:hover,
+    .dossier-btn.active {
+      background: rgba(91, 220, 255, .18);
+    }
+
+    .ref-content {
+      margin-top: 14px;
+      min-height: 250px;
+      padding: 14px;
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, .2);
+      color: #eaf4ff;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .ref-subtitle {
+      margin: 8px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      font-weight: 850;
+    }
+
+    .ref-content h4 {
+      margin: 0 0 10px;
+      color: var(--green);
+      font: 950 16px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .grist-actions {
+      display: grid;
+      gap: 9px;
+      margin-top: 14px;
+    }
+
+    .grist-action {
+      min-height: 36px;
+      padding: 0 10px;
+      border: 1px solid rgba(91, 220, 255, .28);
+      border-radius: 4px;
+      background: rgba(91, 220, 255, .06);
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .grist-action:hover,
+    .grist-action.active {
+      background: rgba(91, 220, 255, .15);
+    }
+
+    .grist-action:disabled {
+      cursor: not-allowed;
+      opacity: .48;
+      color: var(--muted);
+      border-color: rgba(255, 255, 255, .16);
+      background: rgba(255, 255, 255, .035);
+    }
+
+    .case-summary {
+      display: grid;
+      gap: 9px;
+      color: #eaf4ff;
+      font: 850 clamp(12px, .86vw, 15px) / 1.45 var(--mono);
+    }
+
+    .case-summary strong {
+      color: var(--cyan);
+    }
+
+    .case-actions-title {
+      margin-top: 14px;
+      color: var(--sand);
+      font: 950 12px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .analyst-log {
+      margin-top: 14px;
+      padding: 10px 12px;
+      border-left: 2px solid var(--green);
+      background: rgba(94, 228, 139, .075);
+      color: #d9ffe8;
+      font: 850 12px / 1.45 var(--mono);
+      min-height: 86px;
+      max-height: 138px;
+      overflow: auto;
+    }
+
+    .analyst-log-line + .analyst-log-line {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(94, 228, 139, .14);
+    }
+
+    .grist-bottom {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .grist-nav {
+      min-height: 44px;
+      padding: 0 16px;
+      border: 1px solid rgba(91, 220, 255, .3);
+      border-radius: 4px;
+      background: rgba(91, 220, 255, .06);
+      color: var(--cyan);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .grist-nav.next {
+      border-color: rgba(255, 157, 54, .48);
+      background: rgba(255, 157, 54, .12);
+      color: var(--sand);
+    }
+
+    .grist-keyline {
+      text-align: center;
+      color: #f3fbff;
+      font-size: clamp(18px, 1.2vw, 24px);
+      font-weight: 950;
+    }
+
+    .multi-page {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 22px;
+      background:
+        radial-gradient(circle at 26% 76%, rgba(255, 157, 54, .1), transparent 25%),
+        radial-gradient(circle at 66% 34%, rgba(91, 220, 255, .14), transparent 28%),
+        linear-gradient(180deg, rgba(2, 6, 12, .98), rgba(3, 8, 15, .97)),
+        url("assets/carte.png") center / cover no-repeat;
+    }
+
+    .multi-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(2, 6, 12, .88), rgba(2, 6, 12, .56) 48%, rgba(2, 6, 12, .9)),
+        linear-gradient(rgba(91, 220, 255, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .03) 1px, transparent 1px);
+      background-size: auto, 56px 56px, 56px 56px;
+    }
+
+    .multi-shell {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 16px;
+    }
+
+    .multi-head h2 {
+      margin: 0;
+      color: var(--cyan);
+      font-size: clamp(30px, 2.7vw, 56px);
+      line-height: 1;
+      letter-spacing: 1px;
+    }
+
+    .multi-head p {
+      margin: 10px 0 0;
+      max-width: 980px;
+      color: #dce7f2;
+      font-size: clamp(15px, 1vw, 19px);
+      line-height: 1.35;
+      font-weight: 800;
+    }
+
+    .multi-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(420px, .9fr) minmax(520px, 1.1fr);
+      gap: 18px;
+    }
+
+    .multi-panel {
+      min-height: 0;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 10px;
+      background: rgba(3, 9, 17, .78);
+      box-shadow: 0 0 34px rgba(0, 0, 0, .26);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .ascent-map {
+      position: relative;
+      padding: 16px;
+      display: grid;
+      grid-template-rows: minmax(136px, 1fr) 30px minmax(136px, 1fr) 30px minmax(136px, 1fr);
+      gap: 8px;
+    }
+
+    .ascent-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 136px;
+      display: grid;
+      align-content: end;
+      padding: 16px;
+      border: 1px solid rgba(91, 220, 255, .18);
+      border-radius: 10px;
+      opacity: .62;
+      transition: .25s ease;
+      box-shadow: inset 0 0 42px rgba(0, 0, 0, .26);
+    }
+
+    .ascent-card::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 1;
+    }
+
+    .ascent-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(0, 0, 0, .08), rgba(0, 0, 0, .62));
+    }
+
+    .ascent-card.strategic::before {
+      background:
+        radial-gradient(circle at 72% 18%, rgba(94, 228, 139, .42), transparent 24%),
+        radial-gradient(circle at 28% 48%, rgba(91, 220, 255, .28), transparent 30%),
+        repeating-linear-gradient(35deg, rgba(94, 228, 139, .18) 0 1px, transparent 1px 18px),
+        linear-gradient(120deg, rgba(7, 44, 38, .96), rgba(3, 10, 18, .9));
+    }
+
+    .ascent-card.operational::before {
+      background:
+        radial-gradient(circle at 18% 22%, rgba(91, 220, 255, .38), transparent 26%),
+        linear-gradient(rgba(91, 220, 255, .18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .16) 1px, transparent 1px),
+        url("assets/fond.png") center / cover no-repeat;
+      background-size: auto, 30px 30px, 30px 30px, cover;
+    }
+
+    .ascent-card.level-tactical::before {
+      background:
+        radial-gradient(circle at 38% 42%, rgba(255, 157, 54, .42), transparent 30%),
+        linear-gradient(140deg, rgba(64, 35, 14, .42), rgba(4, 10, 18, .7)),
+        url("assets/sahel-poste-avance.png") center / cover no-repeat;
+      filter: saturate(1.05) brightness(.9);
+    }
+
+    .ascent-card.descent-strategic::before {
+      background:
+        radial-gradient(circle at 72% 18%, rgba(94, 228, 139, .44), transparent 24%),
+        radial-gradient(circle at 28% 48%, rgba(91, 220, 255, .3), transparent 30%),
+        repeating-linear-gradient(125deg, rgba(94, 228, 139, .18) 0 1px, transparent 1px 18px),
+        linear-gradient(120deg, rgba(7, 44, 38, .96), rgba(3, 10, 18, .9));
+    }
+
+    .ascent-card.descent-operational::before {
+      background:
+        radial-gradient(circle at 18% 22%, rgba(91, 220, 255, .38), transparent 26%),
+        linear-gradient(rgba(91, 220, 255, .18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .16) 1px, transparent 1px),
+        url("assets/fond.png") center / cover no-repeat;
+      background-size: auto, 30px 30px, 30px 30px, cover;
+    }
+
+    .ascent-card.descent-tactical::before {
+      background:
+        radial-gradient(circle at 38% 42%, rgba(255, 157, 54, .42), transparent 30%),
+        linear-gradient(140deg, rgba(64, 35, 14, .42), rgba(4, 10, 18, .7)),
+        url("assets/sahel-poste-avance.png") center / cover no-repeat;
+      filter: saturate(1.05) brightness(.9);
+    }
+
+    .ascent-card.active {
+      opacity: 1;
+      transform: translateX(6px) scale(1.012);
+      border-color: rgba(91, 220, 255, .5);
+      box-shadow: 0 0 34px rgba(91, 220, 255, .16), inset 0 0 42px rgba(0, 0, 0, .22);
+    }
+
+    .ascent-kicker {
+      color: var(--cyan);
+      font: 950 clamp(10px, .72vw, 12px) var(--mono);
+      letter-spacing: 1.8px;
+      text-transform: uppercase;
+    }
+
+    .ascent-title {
+      margin-top: 6px;
+      color: #fff;
+      font-size: clamp(19px, 1.32vw, 27px);
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .ascent-copy {
+      margin-top: 12px;
+      color: #eaf4ff;
+      font: 900 clamp(11px, .78vw, 14px) / 1.3 var(--mono);
+    }
+
+    .ascent-arrow {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      color: var(--sand);
+      font: 950 11px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .ascent-arrow::before,
+    .ascent-arrow::after {
+      content: "";
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 157, 54, .55), transparent);
+    }
+
+    .ascent-arrow span::before {
+      content: "↑ ";
+      color: var(--cyan);
+    }
+
+    .ascent-arrow.down span::before {
+      content: "↓ ";
+      color: var(--orange);
+    }
+
+    .multi-detail {
+      display: grid;
+      grid-template-rows: 1fr auto;
+      padding: 18px;
+      gap: 14px;
+    }
+
+    .multi-card {
+      min-height: 0;
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid rgba(91, 220, 255, .18);
+      border-radius: 8px;
+      background: rgba(0, 0, 0, .22);
+    }
+
+    .multi-card h3 {
+      margin: 0 0 13px;
+      color: var(--green);
+      font: 950 clamp(18px, 1.3vw, 25px) var(--mono);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .multi-card h4 {
+      margin: 16px 0 8px;
+      color: var(--sand);
+      font: 950 13px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .multi-card ul {
+      margin: 0;
+      padding-left: 1.1em;
+      color: #eef7ff;
+      font: 850 clamp(13px, .9vw, 16px) / 1.45 var(--mono);
+    }
+
+    .multi-card li + li {
+      margin-top: 6px;
+    }
+
+    .multi-message {
+      margin-top: 16px;
+      padding: 13px 14px;
+      border-left: 3px solid var(--cyan);
+      background: rgba(91, 220, 255, .07);
+      color: #f5fbff;
+      font-weight: 950;
+      line-height: 1.35;
+    }
+
+    .multi-badge {
+      display: inline-flex;
+      margin-top: 14px;
+      padding: 7px 10px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      color: var(--orange);
+      background: rgba(255, 157, 54, .08);
+      font: 950 11px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .multi-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .multi-btn,
+    .multi-nav {
+      min-height: 42px;
+      padding: 0 15px;
+      border: 1px solid rgba(91, 220, 255, .3);
+      border-radius: 4px;
+      background: rgba(91, 220, 255, .06);
+      color: var(--cyan);
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .multi-btn.active,
+    .multi-btn:hover,
+    .multi-nav:hover {
+      background: rgba(91, 220, 255, .16);
+    }
+
+    .multi-log {
+      margin-top: 14px;
+      min-height: 82px;
+      max-height: 112px;
+      overflow: auto;
+      padding: 10px 12px;
+      border-left: 2px solid var(--green);
+      background: rgba(94, 228, 139, .075);
+      color: #d9ffe8;
+      font: 850 12px / 1.45 var(--mono);
+    }
+
+    .multi-log-line + .multi-log-line {
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px solid rgba(94, 228, 139, .14);
+    }
+
+    .multi-bottom {
+      display: grid;
+      grid-template-columns: auto auto;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .multi-nav.next {
+      border-color: rgba(255, 157, 54, .48);
+      background: rgba(255, 157, 54, .12);
+      color: var(--sand);
+    }
+
+    .security-grid {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(300px, .82fr) minmax(420px, 1.05fr) minmax(340px, .95fr);
+      gap: 16px;
+    }
+
+    .security-panel {
+      min-height: 0;
+      padding: 18px;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 10px;
+      background: rgba(3, 9, 17, .78);
+      box-shadow: 0 0 34px rgba(0, 0, 0, .26);
+      backdrop-filter: blur(10px);
+      overflow: hidden;
+    }
+
+    .security-panel h3 {
+      margin: 0 0 14px;
+      color: var(--cyan);
+      font: 950 clamp(16px, 1.1vw, 22px) var(--mono);
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+    }
+
+    .core-panel {
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 8px;
+    }
+
+    .core-panel h3 {
+      margin-bottom: 2px;
+    }
+
+    .crisis-panel {
+      position: relative;
+      isolation: isolate;
+      background:
+        radial-gradient(circle at 36% 34%, rgba(255, 157, 54, .24), transparent 28%),
+        linear-gradient(150deg, rgba(70, 38, 16, .72), rgba(3, 9, 17, .86)),
+        url("assets/sahel-poste-avance.png") center / cover no-repeat;
+    }
+
+    .crisis-panel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: .34;
+      pointer-events: none;
+      background:
+        repeating-linear-gradient(0deg, rgba(255, 255, 255, .055) 0 1px, transparent 1px 5px),
+        radial-gradient(circle at 60% 42%, rgba(255, 157, 54, .2), transparent 24%);
+      mix-blend-mode: screen;
+    }
+
+    .alert-chip {
+      display: inline-flex;
+      margin-bottom: 12px;
+      padding: 6px 9px;
+      border: 1px solid rgba(255, 157, 54, .54);
+      border-radius: 999px;
+      color: var(--sand);
+      background: rgba(255, 157, 54, .12);
+      font: 950 10px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .security-indicators {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .security-indicator,
+    .security-block {
+      padding: 10px 12px;
+      border: 1px solid rgba(91, 220, 255, .16);
+      border-radius: 7px;
+      background: rgba(0, 0, 0, .2);
+    }
+
+    .security-indicator span {
+      display: block;
+      color: var(--muted);
+      font: 950 10px var(--mono);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .security-indicator strong {
+      display: block;
+      margin-top: 5px;
+      color: #fff;
+      font-size: clamp(17px, 1.05vw, 22px);
+      line-height: 1.05;
+    }
+
+    .security-copy {
+      margin: 0;
+      color: #eaf4ff;
+      font-weight: 850;
+      line-height: 1.45;
+    }
+
+    .core-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 0;
+    }
+
+    .core-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 9px;
+      border: 1px solid rgba(94, 228, 139, .2);
+      border-radius: 6px;
+      background: rgba(94, 228, 139, .055);
+      color: #effff4;
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .core-check::before {
+      content: "✓";
+      color: var(--green);
+      font: 950 16px var(--mono);
+    }
+
+    .flow-stage {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(220px, .9fr) minmax(260px, 1fr);
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .core-flow {
+      display: grid;
+      gap: 5px;
+      margin: 0;
+      padding: 10px;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 9px;
+      background:
+        linear-gradient(90deg, rgba(91, 220, 255, .055), transparent 32%, rgba(255, 157, 54, .05)),
+        rgba(0, 0, 0, .2);
+      box-shadow: inset 0 0 22px rgba(91, 220, 255, .055);
+      color: #eef7ff;
+      font: 900 clamp(12px, .86vw, 15px) / 1.35 var(--mono);
+      text-align: center;
+    }
+
+    .flow-step {
+      position: relative;
+      padding: 9px 42px 9px 12px;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 6px;
+      background: rgba(4, 16, 28, .72);
+      transition: .22s ease;
+      overflow: hidden;
+    }
+
+    .flow-step.active {
+      color: #fff;
+      border-color: rgba(255, 157, 54, .85);
+      background:
+        linear-gradient(90deg, rgba(255, 157, 54, .28), rgba(91, 220, 255, .12)),
+        rgba(4, 16, 28, .88);
+      box-shadow:
+        0 0 24px rgba(255, 157, 54, .28),
+        inset 0 0 20px rgba(255, 157, 54, .14);
+      transform: scale(1.018);
+    }
+
+    .flow-step.active::after {
+      content: "ACTIF";
+      position: absolute;
+      top: 50%;
+      right: 10px;
+      transform: translateY(-50%);
+      color: var(--sand);
+      font: 950 10px var(--mono);
+      letter-spacing: .8px;
+    }
+
+    .flow-step.active::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--orange);
+      box-shadow: 0 0 14px rgba(255, 157, 54, .78);
+    }
+
+    .flow-arrow {
+      color: var(--sand);
+      font-size: 17px;
+      line-height: 1;
+      text-shadow: 0 0 12px rgba(255, 157, 54, .38);
+    }
+
+    .security-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      padding: 8px;
+      border: 1px solid rgba(91, 220, 255, .32);
+      border-radius: 8px;
+      background: rgba(91, 220, 255, .075);
+      box-shadow: 0 0 18px rgba(91, 220, 255, .08);
+    }
+
+    .crisis-panel .security-actions {
+      margin-top: 16px;
+      border-color: rgba(255, 157, 54, .3);
+      background: rgba(0, 0, 0, .24);
+    }
+
+    .security-btn {
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid rgba(91, 220, 255, .42);
+      border-radius: 5px;
+      background: rgba(91, 220, 255, .1);
+      color: var(--cyan);
+      font-size: clamp(11px, .76vw, 13px);
+      line-height: 1.1;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .security-btn:hover,
+    .security-btn.active {
+      color: #fff;
+      border-color: rgba(255, 157, 54, .72);
+      background: rgba(255, 157, 54, .18);
+      box-shadow: 0 0 18px rgba(255, 157, 54, .16);
+    }
+
+    .scenario-card {
+      position: relative;
+      min-height: 0;
+      margin-top: 0;
+      padding: 14px 16px;
+      border: 1px solid rgba(255, 157, 54, .32);
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255, 157, 54, .1), rgba(91, 220, 255, .045)),
+        rgba(4, 10, 17, .92);
+      box-shadow: 0 0 24px rgba(255, 157, 54, .11);
+      overflow: visible;
+      align-self: stretch;
+      opacity: 1;
+      animation: scenario-in .24s ease both;
+    }
+
+    .scenario-card::before {
+      content: "";
+      position: absolute;
+      top: 48%;
+      left: -11px;
+      width: 11px;
+      border-top: 1px solid rgba(255, 157, 54, .72);
+      box-shadow: 0 0 12px rgba(255, 157, 54, .4);
+    }
+
+    @keyframes scenario-in {
+      from { opacity: .42; transform: translateX(-8px); filter: blur(2px); }
+      to { opacity: 1; transform: translateX(0); filter: blur(0); }
+    }
+
+    .scenario-card h4 {
+      margin: 0 0 10px;
+      color: var(--sand);
+      font: 950 clamp(17px, 1.2vw, 24px) var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .scenario-card strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--cyan);
+      font: 950 12px var(--mono);
+      letter-spacing: .7px;
+      text-transform: uppercase;
+    }
+
+    .scenario-card ul,
+    .security-block ul {
+      margin: 8px 0 0;
+      padding-left: 1.1em;
+      color: #eef7ff;
+      font: 850 clamp(12px, .82vw, 14px) / 1.46 var(--mono);
+    }
+
+    .scenario-card li + li,
+    .security-block li + li {
+      margin-top: 4px;
+    }
+
+    .security-blocks {
+      display: grid;
+      gap: 10px;
+      height: calc(100% - 34px);
+      overflow: auto;
+      padding-right: 2px;
+    }
+
+    .security-block h4 {
+      margin: 0;
+      color: var(--green);
+      font: 950 13px var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .security-block.no-go {
+      border-color: rgba(255, 111, 82, .38);
+      background: rgba(255, 111, 82, .08);
+    }
+
+    .security-bottom {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 14px;
+      align-items: center;
+    }
+
+    .security-keyline {
+      text-align: center;
+      color: #f3fbff;
+      font-size: clamp(18px, 1.2vw, 24px);
+      font-weight: 950;
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 157, 54, .28);
+      border-radius: 8px;
+      background: rgba(255, 157, 54, .08);
+    }
+
+    .conclusion-page {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 26px;
+      background:
+        radial-gradient(circle at 48% 36%, rgba(91, 220, 255, .12), transparent 30%),
+        radial-gradient(circle at 72% 72%, rgba(255, 157, 54, .08), transparent 25%),
+        linear-gradient(180deg, rgba(2, 6, 12, .12), rgba(2, 6, 12, .62) 72%, rgba(2, 6, 12, .88)),
+        url("assets/fond.png") center / cover no-repeat;
+    }
+
+    .conclusion-page::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(2, 6, 12, .5), rgba(2, 6, 12, .12) 48%, rgba(2, 6, 12, .48)),
+        linear-gradient(rgba(91, 220, 255, .055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(91, 220, 255, .05) 1px, transparent 1px);
+      background-size: auto, 58px 58px, 58px 58px;
+      opacity: .92;
+    }
+
+    .conclusion-page::after {
+      content: "";
+      position: absolute;
+      inset: auto 0 0;
+      height: 34%;
+      pointer-events: none;
+      background:
+        linear-gradient(180deg, transparent, rgba(0, 0, 0, .52)),
+        radial-gradient(circle at 50% 0%, rgba(91, 220, 255, .13), transparent 42%);
+    }
+
+    .conclusion-shell {
+      position: relative;
+      z-index: 1;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 22px;
+    }
+
+    .conclusion-hero {
+      max-width: 1320px;
+    }
+
+    .conclusion-kicker {
+      margin: 0 0 12px;
+      color: var(--cyan);
+      font: 950 clamp(12px, .85vw, 16px) var(--mono);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .conclusion-hero h2 {
+      margin: 0;
+      max-width: 1180px;
+      color: #f3fbff;
+      font-size: clamp(38px, 4vw, 82px);
+      line-height: .96;
+      letter-spacing: 0;
+      text-shadow: 0 0 30px rgba(91, 220, 255, .22);
+    }
+
+    .conclusion-hero p {
+      margin: 18px 0 0;
+      max-width: 980px;
+      color: #dce7f2;
+      font-size: clamp(18px, 1.25vw, 25px);
+      line-height: 1.32;
+      font-weight: 850;
+    }
+
+    .conclusion-main {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 22px;
+      align-content: center;
+    }
+
+    .pillars {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .pillar {
+      min-height: 220px;
+      padding: 22px;
+      border: 1px solid rgba(91, 220, 255, .24);
+      border-radius: 10px;
+      background:
+        linear-gradient(145deg, rgba(91, 220, 255, .16), rgba(2, 7, 13, .48) 48%, rgba(255, 157, 54, .1)),
+        rgba(3, 9, 17, .5);
+      box-shadow: 0 0 36px rgba(0, 0, 0, .28);
+      backdrop-filter: blur(5px);
+      opacity: 0;
+      transform: translateY(18px);
+      animation: pillar-in .52s ease forwards;
+    }
+
+    .pillar:nth-child(2) { animation-delay: .18s; }
+    .pillar:nth-child(3) { animation-delay: .36s; }
+
+    .pillar h3 {
+      margin: 0 0 18px;
+      color: var(--cyan);
+      font: 950 clamp(22px, 1.6vw, 34px) var(--mono);
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+    }
+
+    .pillar p {
+      margin: 0;
+      color: #eff7ff;
+      font-size: clamp(17px, 1.1vw, 23px);
+      line-height: 1.45;
+      font-weight: 850;
+    }
+
+    .final-line {
+      justify-self: center;
+      width: min(1180px, 100%);
+      padding: 24px 28px;
+      border: 1px solid rgba(255, 157, 54, .34);
+      border-radius: 12px;
+      background:
+        linear-gradient(90deg, rgba(255, 157, 54, .1), rgba(91, 220, 255, .1)),
+        rgba(0, 0, 0, .28);
+      color: #fff;
+      text-align: center;
+      font-size: clamp(30px, 3vw, 62px);
+      line-height: 1.1;
+      font-weight: 950;
+      box-shadow: 0 0 42px rgba(255, 157, 54, .12);
+      opacity: 0;
+      transform: translateY(12px) scale(.98);
+      animation: final-in .62s ease .78s forwards;
+    }
+
+    .final-line span {
+      display: block;
+    }
+
+    .conclusion-bottom {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: end;
+      gap: 18px;
+    }
+
+    .thanks-note {
+      justify-self: center;
+      opacity: 0;
+      color: var(--muted);
+      font: 900 13px var(--mono);
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      transition: .2s ease;
+    }
+
+    .thanks-note.visible {
+      opacity: 1;
+      color: var(--sand);
+    }
+
+    .thanks-btn {
+      min-height: 38px;
+      padding: 0 14px;
+      border: 1px solid rgba(91, 220, 255, .22);
+      border-radius: 5px;
+      background: rgba(91, 220, 255, .06);
+      color: var(--cyan);
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .thanks-btn:hover {
+      border-color: rgba(255, 157, 54, .44);
+      color: var(--sand);
+      background: rgba(255, 157, 54, .08);
+    }
+
+    @keyframes pillar-in {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes final-in {
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .poster-page {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      padding: 18px 22px;
+      background:
+        radial-gradient(circle at 18% 12%, rgba(110, 45, 31, .16), transparent 22%),
+        radial-gradient(circle at 82% 84%, rgba(67, 76, 38, .18), transparent 24%),
+        linear-gradient(135deg, #d8caa9, #f0e4c9 42%, #c9ba93);
+      color: #25251e;
+      font-family: var(--font);
+    }
+
+    .poster-sheet {
+      position: relative;
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      padding: 18px 22px 16px;
+      border: 4px solid #343421;
+      border-radius: 8px;
+      background:
+        linear-gradient(rgba(255, 255, 255, .2), rgba(255, 255, 255, .05)),
+        repeating-linear-gradient(0deg, rgba(54, 49, 31, .035) 0 1px, transparent 1px 5px),
+        #eadfca;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .28), 0 16px 42px rgba(0, 0, 0, .28);
+      overflow: hidden;
+    }
+
+    .poster-sheet::before,
+    .poster-sheet::after {
+      content: "";
+      position: absolute;
+      width: 86px;
+      height: 86px;
+      border-color: #343421;
+      pointer-events: none;
+    }
+
+    .poster-sheet::before {
+      top: 16px;
+      left: 16px;
+      border-top: 5px solid;
+      border-left: 5px solid;
+    }
+
+    .poster-sheet::after {
+      right: 16px;
+      bottom: 16px;
+      border-right: 5px solid;
+      border-bottom: 5px solid;
+    }
+
+    .poster-head {
+      position: relative;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 18px;
+      align-items: start;
+      text-transform: uppercase;
+    }
+
+    .poster-stars {
+      color: #343421;
+      font: 950 20px var(--mono);
+      letter-spacing: 12px;
+      text-align: center;
+    }
+
+    .poster-title h2 {
+      margin: 4px 0 2px;
+      color: #202018;
+      font-size: clamp(44px, 5.2vw, 104px);
+      line-height: .9;
+      letter-spacing: 2px;
+      text-shadow: 2px 2px 0 rgba(255, 255, 255, .28);
+    }
+
+    .poster-title p {
+      margin: 0;
+      color: #565b35;
+      font: 950 clamp(18px, 1.5vw, 31px) var(--mono);
+      letter-spacing: 1.5px;
+    }
+
+    .poster-stamp {
+      transform: rotate(7deg);
+      padding: 10px 14px;
+      border: 3px solid #8d2f24;
+      border-radius: 6px;
+      color: #8d2f24;
+      background: rgba(255, 255, 255, .24);
+      font: 950 clamp(12px, .95vw, 16px) / 1.25 var(--mono);
+      letter-spacing: 1px;
+      text-align: center;
+    }
+
+    .poster-body {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: minmax(390px, .92fr) minmax(460px, 1.08fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .poster-visual {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      gap: 10px;
+    }
+
+    .poster-photo {
+      min-height: 0;
+      border: 4px solid #45482b;
+      border-radius: 18px;
+      background: #111;
+      overflow: hidden;
+      box-shadow: 0 9px 18px rgba(0, 0, 0, .18);
+    }
+
+    .poster-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .mission-ribbon {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 12px;
+      align-items: center;
+      padding: 12px 18px;
+      border: 4px double #45482b;
+      border-radius: 10px;
+      background: linear-gradient(180deg, #5f6837, #343b1f);
+      color: #f7f0d7;
+      text-align: center;
+      font: 950 clamp(18px, 1.5vw, 30px) var(--mono);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    .mission-ribbon::before,
+    .mission-ribbon::after {
+      content: "";
+      height: 2px;
+      background: currentColor;
+      opacity: .7;
+    }
+
+    .poster-content {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 12px;
+    }
+
+    .poster-lead {
+      padding: 12px 16px;
+      border: 2px dashed rgba(52, 52, 33, .42);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .28);
+      font-size: clamp(18px, 1.35vw, 27px);
+      line-height: 1.23;
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .poster-token {
+      justify-self: center;
+      padding: 8px 14px;
+      border: 2px solid #343421;
+      border-radius: 999px;
+      color: #f7f0d7;
+      background: #3e4627;
+      font: 950 clamp(13px, .9vw, 17px) var(--mono);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .poster-blocks {
+      min-height: 0;
+      display: grid;
+      grid-template-columns: .9fr 1.1fr;
+      gap: 12px;
+    }
+
+    .poster-block,
+    .coach-block {
+      padding: 13px 15px;
+      border: 2px solid rgba(52, 52, 33, .54);
+      border-radius: 8px;
+      background: rgba(255, 252, 235, .46);
+    }
+
+    .poster-block h3,
+    .coach-block h3 {
+      margin: 0 0 8px;
+      color: #4c562f;
+      font: 950 clamp(15px, 1vw, 20px) var(--mono);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .poster-block ul {
+      margin: 0;
+      padding-left: 1.05em;
+      font-size: clamp(13px, .85vw, 16px);
+      line-height: 1.34;
+      font-weight: 850;
+    }
+
+    .poster-block p,
+    .coach-block p {
+      margin: 0;
+      font-size: clamp(13px, .86vw, 16px);
+      line-height: 1.38;
+      font-weight: 820;
+    }
+
+    .coach-names {
+      margin: 8px 0;
+      color: #8d2f24;
+      font: 950 clamp(16px, 1vw, 21px) var(--mono);
+      letter-spacing: .7px;
+    }
+
+    .poster-final {
+      padding: 10px 14px;
+      border-top: 3px solid #343421;
+      border-bottom: 3px solid #343421;
+      color: #202018;
+      font: 950 clamp(18px, 1.35vw, 28px) / 1.2 var(--mono);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .poster-bottom {
+      display: grid;
+      grid-template-columns: auto 1fr auto auto;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .poster-nav {
+      min-height: 38px;
+      padding: 0 15px;
+      border: 2px solid #343421;
+      border-radius: 5px;
+      background: rgba(255, 252, 235, .5);
+      color: #25251e;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .poster-nav:hover {
+      background: #343421;
+      color: #f7f0d7;
+    }
+
+    .poster-nav.subtle {
+      border-color: rgba(52, 52, 33, .38);
+      color: rgba(37, 37, 30, .72);
+      background: transparent;
+    }
+
+    .poster-mark {
+      justify-self: center;
+      color: rgba(52, 52, 33, .75);
+      font: 950 13px var(--mono);
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 1100px) {
+      .tech-page { overflow: auto; }
+      .tech-shell { height: auto; min-height: 100%; grid-template-columns: 1fr; }
+      .map-stage { min-height: 520px; }
+      .llm-page { overflow: auto; }
+      .llm-shell { height: auto; min-height: 100%; }
+      .llm-grid { grid-template-columns: 1fr; }
+      .llm-bottom { grid-template-columns: 1fr; }
+      .grist-page { overflow: auto; }
+      .grist-shell { height: auto; min-height: 100%; }
+      .grist-grid { grid-template-columns: 1fr; }
+      .grist-bottom { grid-template-columns: 1fr; }
+      .multi-page { overflow: auto; }
+      .multi-shell { height: auto; min-height: 100%; }
+      .multi-grid { grid-template-columns: 1fr; }
+      .multi-bottom { grid-template-columns: 1fr; }
+      .security-grid { grid-template-columns: 1fr; }
+      .security-bottom { grid-template-columns: 1fr; }
+      .flow-stage { grid-template-columns: 1fr; }
+      .scenario-card::before { display: none; }
+      .security-actions { grid-template-columns: 1fr 1fr; }
+      .conclusion-page { overflow: auto; }
+      .conclusion-shell { height: auto; min-height: 100%; }
+      .pillars { grid-template-columns: 1fr; }
+      .conclusion-bottom { grid-template-columns: 1fr; }
+      .poster-page { overflow: auto; }
+      .poster-sheet { height: auto; min-height: 100%; }
+      .poster-body,
+      .poster-blocks { grid-template-columns: 1fr; }
+      .poster-bottom { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="scene page active" id="scene" data-step="0" aria-label="Ouverture SynOps">
+    <div class="dust" aria-hidden="true"></div>
+    <img class="logo" src="assets/logo.png" alt="SynOps">
+    <div class="badge">Théâtre Sahel · Poste avancé isolé<br>Données fictives et non sensibles</div>
+
+    <section class="opening-title">
+      <p class="kicker">Théâtre Sahel · Poste avancé isolé</p>
+      <h1>SynOps</h1>
+      <div class="subtitle">Assistant génératif de médiation sémantique</div>
+      <div class="opening-line">Une opération. Des sources hétérogènes. Une chaîne de décision à éclairer.</div>
+    </section>
+
+    <section class="hud-anchor network">
+      <div class="hud-card">
+        <div class="hud-label">Réseau</div>
+        <div class="hud-value">instable</div>
+      </div>
+    </section>
+    <section class="hud-anchor energy">
+      <div class="hud-card">
+        <div class="hud-label">Énergie</div>
+        <div class="hud-value">limitée</div>
+      </div>
+    </section>
+    <section class="hud-anchor tactical">
+      <div class="hud-card">
+        <div class="hud-label">Niveau</div>
+        <div class="hud-value">tactique</div>
+      </div>
+    </section>
+    <div class="terrain-line">Poste avancé isolé, en plein Sahel.<br>La friction du terrain est maximale.</div>
+
+    <section class="signal drone">
+      <div class="signal-card">
+        <span class="signal-dot"></span>
+        <div class="signal-src">Drone ISR</div>
+        <div class="signal-term">HOSTILE_MOVEMENT</div>
+      </div>
+    </section>
+    <section class="signal terre">
+      <div class="signal-card">
+        <span class="signal-dot"></span>
+        <div class="signal-src">Unité Terre</div>
+        <div class="signal-term">ENGAGEMENT_APPUI_FEU</div>
+      </div>
+    </section>
+    <section class="signal allies">
+      <div class="signal-card">
+        <span class="signal-dot"></span>
+        <div class="signal-src">Forces alliées</div>
+        <div class="signal-term">TECHNICAL</div>
+      </div>
+    </section>
+    <section class="signal sigint">
+      <div class="signal-card">
+        <span class="signal-dot"></span>
+        <div class="signal-src">SIGINT</div>
+        <div class="signal-term">BRAVO_SECURE</div>
+      </div>
+    </section>
+
+    <section class="mission">
+      <div class="mission-kicker">Mission SynOps</div>
+      <div class="mission-main">Transformer des messages opérationnels hétérogènes en compréhension commune, expliquée et contrôlée.</div>
+      <div class="mission-bottom">Du premier message capté jusqu'à l'arbitrage final.</div>
+    </section>
+
+    <nav class="controls" aria-label="Progression page 1">
+      <div class="dots" aria-hidden="true">
+        <span class="dot active"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+        <span class="dot"></span>
+      </div>
+      <button class="nav-btn back" id="backBtn" type="button">←</button>
+      <button class="nav-btn" id="nextBtn" type="button">Initialiser le briefing →</button>
+    </nav>
+  </main>
+
+  <section class="tech-page page" id="techPage" aria-label="Traitement tactique SynOps">
+    <div class="tech-shell">
+      <div class="tech-left">
+        <div class="map-stage">
+          <img src="assets/carte.png" alt="Carte opérationnelle du Secteur B">
+          <div class="map-pulse" aria-hidden="true"></div>
+          <article class="tech-message m-drone" data-source="drone">
+            <div class="message-head"><strong>Drone ISR</strong><span class="message-time">14h21Z</span></div>
+            <div class="message-body">
+              <span class="label">SOURCE:</span> DRONE_ISR_7<br>
+              <span class="label">ZONE:</span> SECTEUR_B<br>
+              <span class="label">CONTACT:</span> <span class="value">HOSTILE_MOVEMENT</span><br>
+              <span class="label">EFFECTIF:</span> 3 VEH + 12 PAX
+            </div>
+          </article>
+          <article class="tech-message m-terre" data-source="terre">
+            <div class="message-head"><strong>Unité Terre</strong><span class="message-time">14h21Z</span></div>
+            <div class="message-body">
+              <span class="label">SOURCE:</span> ALPHA_2<br>
+              <span class="label">ZONE:</span> SECTEUR_B<br>
+              <span class="label">DEMANDE:</span> <span class="value">ENGAGEMENT_APPUI_FEU</span><br>
+              <span class="label">URGENCE:</span> ELEVEE
+            </div>
+          </article>
+          <article class="tech-message m-allies" data-source="allies">
+            <div class="message-head"><strong>Forces alliées</strong><span class="message-time">14h22Z</span></div>
+            <div class="message-body">
+              <span class="label">SOURCE:</span> ALLIED_PATROL<br>
+              <span class="label">ZONE:</span> SECTEUR_B<br>
+              <span class="label">TERM:</span> <span class="value">TECHNICAL</span><br>
+              <span class="label">STATUS:</span> OBSERVED
+            </div>
+          </article>
+          <article class="tech-message m-sigint" data-source="sigint">
+            <div class="message-head"><strong>SIGINT</strong><span class="message-time">14h22Z</span></div>
+            <div class="message-body">
+              <span class="label">SOURCE:</span> SIGINT_NODE<br>
+              <span class="label">ZONE:</span> SECTEUR_B<br>
+              <span class="label">MESSAGE:</span> <span class="value">BRAVO_SECURE</span><br>
+              <span class="label">FIABILITE:</span> MOYENNE
+            </div>
+          </article>
+        </div>
+        <div class="buffer-arrow">↓</div>
+        <div class="buffer">
+          <h3>Zone tampon contrôlée</h3>
+          <p>Vérifier · Labelliser · Journaliser · Filtrer · Router</p>
+          <div class="zero">Zero Trust appliqué : aucune source fiable par défaut · trace obligatoire</div>
+        </div>
+      </div>
+
+      <aside class="console">
+        <div class="console-head">
+          <h2>Console SynOps — Niveau tactique</h2>
+          <button class="console-page-back" id="backToIntro" type="button">← Ouverture</button>
+        </div>
+        <div class="console-indicators">
+          <div class="indicator"><span>Mode</span><strong>ressources contraintes</strong></div>
+          <div class="indicator"><span>Connexion</span><strong>dégradée</strong></div>
+          <div class="indicator"><span>Traitement</span><strong>local d'abord</strong></div>
+        </div>
+        <div class="step-panel">
+          <div class="step-top">
+            <span id="techStepCount">Étape 1 / 6</span>
+            <span class="step-badge" id="techBadge">Entrée brute</span>
+          </div>
+          <p class="step-text" id="techText"></p>
+          <div class="result" id="techResult"></div>
+          <div class="journal" id="techJournal"></div>
+          <div class="console-controls">
+            <button class="console-btn" id="techPrev" type="button">← Retour</button>
+            <button class="console-btn" id="techReset" type="button">Réinitialiser</button>
+            <button class="console-btn" id="techNext" type="button">Étape suivante →</button>
+          </div>
+        </div>
+        <div>
+          <div class="qa">
+            <button class="qa-btn active" data-qa="in" type="button">Ce qui entre</button>
+            <button class="qa-btn" data-qa="route" type="button">Routage IA</button>
+            <button class="qa-btn" data-qa="out" type="button">Ce qui ressort</button>
+          </div>
+          <div class="qa-panel" id="qaPanel">Messages terrain hétérogènes : source · zone · terme · urgence · fiabilité · horodatage · sensibilité</div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="llm-page page" id="llmPage" aria-label="IA ciblée sur signaux ambigus" data-focus="technical">
+    <div class="llm-shell">
+      <header class="llm-head">
+        <div>
+          <h2>Secteur B : traiter l'incertitude</h2>
+          <p>Le LLM local ou maîtrisé reçoit un extrait filtré, produit une hypothèse expliquée, puis renvoie vers validation humaine.</p>
+        </div>
+        <button class="llm-back" id="llmBack" type="button">← Traitement tactique</button>
+      </header>
+
+      <div class="llm-grid">
+        <section class="llm-panel">
+          <h3>Signaux à interpréter</h3>
+          <div class="signal-stack">
+            <article class="ambiguity-card case-technical active" data-case="technical">
+              <div class="ambiguity-top">
+                <div class="ambiguity-title">Forces alliées</div>
+                <span class="alert-badge">Terme ambigu</span>
+              </div>
+              <dl class="field-list">
+                <dt>SOURCE :</dt> <dd>ALLIED_PATROL</dd>
+                <dt>TERM :</dt> <dd>TECHNICAL</dd>
+                <dt>STATUT :</dt> <dd>absent du référentiel national</dd>
+                <dt>RISQUE :</dt> <dd>interprétation alliée ambiguë</dd>
+              </dl>
+            </article>
+
+            <article class="ambiguity-card case-bravo" data-case="bravo">
+              <div class="ambiguity-top">
+                <div class="ambiguity-title">SIGINT</div>
+                <span class="alert-badge">Contradiction possible</span>
+              </div>
+              <dl class="field-list">
+                <dt>SOURCE :</dt> <dd>SIGINT_NODE</dd>
+                <dt>MESSAGE :</dt> <dd>BRAVO_SECURE</dd>
+                <dt>FIABILITÉ :</dt> <dd>moyenne</dd>
+                <dt>TENSION :</dt> <dd>contredit le signal drone</dd>
+              </dl>
+            </article>
+          </div>
+        </section>
+
+        <section class="llm-panel llm-core">
+          <div class="llm-core-title">
+            <div class="llm-core-title-main">
+              <h3>LLM local / maîtrisé</h3>
+              <span>Appel ciblé uniquement sur les cas ambigus.</span>
+            </div>
+            <div class="llm-warning">Aucun message brut complet transmis.</div>
+          </div>
+
+          <div class="llm-limits">
+            <div class="llm-box">
+              <h4>Entrée IA ciblée</h4>
+              <ul>
+                <li>terme ambigu</li>
+                <li>source</li>
+                <li>zone</li>
+                <li>contexte résumé</li>
+                <li>fiabilité</li>
+                <li>objectif d'analyse</li>
+              </ul>
+            </div>
+            <div class="llm-box">
+              <h4>Hors LLM</h4>
+              <ul>
+                <li>message brut complet</li>
+                <li>champs hors périmètre de l'analyse</li>
+                <li>décision finale</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="question-box">
+            <div class="question-label" id="llmQuestionLabel">Extrait filtré transmis au LLM</div>
+            <div class="question-text" id="llmQuestion">
+              <strong>TERME :</strong> TECHNICAL<br>
+              <strong>SOURCE :</strong> ALLIED_PATROL<br>
+              <strong>ZONE :</strong> SECTEUR_B<br>
+              <strong>CONTEXTE :</strong> présence hostile probable<br>
+              <strong>FIABILITÉ :</strong> moyenne<br>
+              <strong>OBJECTIF :</strong> proposer une hypothèse sémantique
+            </div>
+          </div>
+        </section>
+
+        <section class="llm-panel">
+          <h3>Sortie pivot structurée</h3>
+          <div class="out-stack">
+            <article class="answer-card answer-technical active" data-answer="technical">
+              <div class="answer-top">
+                <div class="answer-title">TECHNICAL — 0.74</div>
+                <div class="score">0.74</div>
+              </div>
+              <ul class="answer-lines">
+                <li>hypothèse : véhicule léger armé probable</li>
+                <li>usage local possible</li>
+                <li>validation interalliée requise</li>
+              </ul>
+            </article>
+
+            <article class="answer-card answer-bravo" data-answer="bravo">
+              <div class="answer-top">
+                <div class="answer-title">BRAVO_SECURE — 0.35</div>
+                <div class="score">0.35</div>
+              </div>
+              <ul class="answer-lines">
+                <li>contradiction SIGINT possible</li>
+                <li>investigation analyste</li>
+                <li>ne suffit pas à engager une action</li>
+              </ul>
+            </article>
+
+            <article class="pivot-card" id="pivotCard">
+              <div class="pivot-title">
+                <span>Sortie pivot — B-01</span>
+                <span class="mim-badge">Compatible logique MIM</span>
+              </div>
+              <p class="pivot-copy">Information commune, exploitable, traçable, compatible avec une logique MIM.</p>
+              <div class="pivot-data">
+                <strong>ZONE :</strong> SECTEUR_B<br>
+                <strong>TYPE :</strong> PRÉSENCE_HOSTILE_PROBABLE<br>
+                <strong>STATUT :</strong> À_VALIDER<br>
+                <strong>CONFIANCE :</strong> 0.78<br><br>
+                <strong>POINTS OUVERTS :</strong><br>
+                TECHNICAL → validation interalliée requise<br>
+                BRAVO_SECURE → contradiction à investiguer
+              </div>
+            </article>
+
+            <div class="human-note">Hypothèse générée. Validation humaine requise.</div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="llm-bottom">
+        <div class="llm-actions" aria-label="Vues IA ciblée">
+          <button class="llm-btn active" data-llm-mode="technical" type="button">1. Cas TECHNICAL</button>
+          <button class="llm-btn" data-llm-mode="bravo" type="button">2. Cas BRAVO_SECURE</button>
+          <button class="llm-btn" data-llm-mode="pivot" type="button">3. Sortie pivot B-01</button>
+        </div>
+        <button class="llm-next" type="button">Page suivante : Validation dans Grist →</button>
+        <div class="llm-log" id="llmLog">[14:25] Appel LLM ciblé sur TECHNICAL — extrait filtré transmis.</div>
+      </footer>
+    </div>
+  </section>
+
+  <section class="grist-page page" id="gristPage" aria-label="Validation humaine dans Grist">
+    <div class="grist-shell">
+      <header class="grist-head">
+        <div>
+          <h2>Grist : l'arbitrage humain avant capitalisation</h2>
+          <p>Les propositions SynOps sont tracées, expliquées et validées avant d'enrichir le référentiel.</p>
+        </div>
+      </header>
+
+      <div class="grist-grid">
+        <aside class="grist-panel pivot-received">
+          <div class="pivot-received-title">Sortie pivot — B-01</div>
+          <div class="pivot-received-meta">
+            <strong>STATUT :</strong> À_VALIDER<br>
+            <strong>DESTINATION :</strong> Grist / analyste opérationnel
+          </div>
+          <ul class="received-list">
+            <li>Présence hostile probable</li>
+            <li>Demande tir appui</li>
+            <li>TECHNICAL / véhicule léger armé probable</li>
+            <li>Contradiction SIGINT possible</li>
+          </ul>
+        </aside>
+
+        <section class="grist-panel">
+          <h3>Tableau Grist de validation</h3>
+          <div class="grist-table-wrap">
+            <table class="grist-table">
+              <thead>
+                <tr>
+                  <th>Proposition SynOps</th>
+                  <th>Source</th>
+                  <th>Score</th>
+                  <th>Explication</th>
+                  <th>Statut</th>
+                  <th>Dossier</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr data-grist-row="hostile">
+                  <td>Présence hostile probable</td>
+                  <td>Drone ISR</td>
+                  <td><span class="score-pill">0.78</span></td>
+                  <td>HOSTILE_MOVEMENT rapproché d'une présence hostile.</td>
+                  <td><span class="status-pill">à valider</span></td>
+                  <td><button class="dossier-btn" data-dossier="hostile" type="button">Examiner</button></td>
+                </tr>
+                <tr data-grist-row="tir">
+                  <td>Demande tir appui</td>
+                  <td>Unité Terre</td>
+                  <td><span class="score-pill">0.91</span></td>
+                  <td>ENGAGEMENT_APPUI_FEU rapproché d'une demande de tir appui.</td>
+                  <td><span class="status-pill">validable</span></td>
+                  <td><button class="dossier-btn" data-dossier="tir" type="button">Examiner</button></td>
+                </tr>
+                <tr data-grist-row="technical">
+                  <td>TECHNICAL → véhicule léger armé probable</td>
+                  <td>Forces alliées</td>
+                  <td><span class="score-pill">0.74</span></td>
+                  <td>hypothèse sémantique proposée.</td>
+                  <td><span class="status-pill">validation interalliée requise</span></td>
+                  <td><button class="dossier-btn" data-dossier="technical" type="button">Examiner</button></td>
+                </tr>
+                <tr data-grist-row="bravo">
+                  <td>BRAVO_SECURE</td>
+                  <td>SIGINT</td>
+                  <td><span class="score-pill">0.35</span></td>
+                  <td>contradiction possible avec le signal Drone ISR.</td>
+                  <td><span class="status-pill">investigation analyste</span></td>
+                  <td><button class="dossier-btn" data-dossier="bravo" type="button">Examiner</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <aside class="grist-panel ref-panel">
+          <h3>Capitalisation contrôlée</h3>
+          <p class="ref-subtitle">Le référentiel s'enrichit uniquement après validation humaine.</p>
+          <div class="ref-content" id="refContent">Sélectionnez un dossier dans le tableau pour afficher la proposition, son statut, son explication et les actions disponibles.</div>
+          <div class="analyst-log" id="analystLog">Journal analyste en attente.</div>
+        </aside>
+      </div>
+
+      <footer class="grist-bottom">
+        <button class="grist-nav" id="gristPrev" type="button">← Page précédente : Sortie pivot</button>
+        <div class="grist-keyline">SynOps propose, explique et trace. L'analyste valide.</div>
+        <button class="grist-nav next" id="gristNext" type="button">Page suivante : Remontée multi-niveaux →</button>
+      </footer>
+    </div>
+  </section>
+
+  <section class="multi-page page" id="multiPage" aria-label="Remontée multi-niveaux">
+    <div class="multi-shell">
+      <header class="multi-head">
+        <h2>Du terrain au stratégique : le sens remonte</h2>
+        <p>Les messages bruts ne remontent pas tels quels : SynOps transmet une information structurée, validée et contextualisée.</p>
+      </header>
+
+      <div class="multi-grid">
+        <section class="multi-panel ascent-map">
+          <article class="ascent-card strategic" data-level-node="strategic">
+            <div class="ascent-kicker">Niveau stratégique</div>
+            <div class="ascent-title">Paris</div>
+            <div class="ascent-copy">Tendance transverse<br>Ambiguïtés alliées récurrentes</div>
+          </article>
+          <div class="ascent-arrow"><span>Tendance stratégique</span></div>
+          <article class="ascent-card operational" data-level-node="operational">
+            <div class="ascent-kicker">Niveau opératif</div>
+            <div class="ascent-title">PC Théâtre Sahel</div>
+            <div class="ascent-copy">Synthèse A + B + C<br>Priorité Secteur B</div>
+          </article>
+          <div class="ascent-arrow"><span>Synthèse multi-secteurs</span></div>
+          <article class="ascent-card level-tactical active" data-level-node="tactical">
+            <div class="ascent-kicker">Niveau tactique</div>
+            <div class="ascent-title">Secteur B</div>
+            <div class="ascent-copy">Sortie pivot B-01<br>Détail tactique validé</div>
+          </article>
+        </section>
+
+        <section class="multi-panel multi-detail">
+          <div class="multi-card" id="multiContent"></div>
+          <div>
+            <div class="multi-controls" aria-label="Niveaux de remontée">
+              <button class="multi-btn active" data-multi-level="tactical" type="button">1. Niveau tactique</button>
+              <button class="multi-btn" data-multi-level="operational" type="button">2. Niveau opératif</button>
+              <button class="multi-btn" data-multi-level="strategic" type="button">3. Niveau stratégique</button>
+            </div>
+            <div class="multi-log" id="multiLog">Journal multi-niveaux en attente.</div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="multi-bottom">
+        <button class="multi-nav" id="multiPrev" type="button">← Page précédente : Validation Grist</button>
+        <button class="multi-nav next" id="multiNext" type="button">Page suivante : Redescente stratégique →</button>
+      </footer>
+    </div>
+  </section>
+
+  <section class="multi-page page" id="descentPage" aria-label="Redescente stratégique">
+    <div class="multi-shell">
+      <header class="multi-head">
+        <h2>Du stratégique au terrain : la règle redescend</h2>
+        <p>Une directive validée au niveau stratégique devient une règle applicable localement par SynOps.</p>
+      </header>
+
+      <div class="multi-grid">
+        <section class="multi-panel ascent-map">
+          <article class="ascent-card descent-strategic active" data-descent-node="directive">
+            <div class="ascent-kicker">Niveau stratégique</div>
+            <div class="ascent-title">Paris</div>
+            <div class="ascent-copy">Directive validée<br>Termes alliés ambigus à contrôler</div>
+          </article>
+          <div class="ascent-arrow down"><span>Directive stratégique</span></div>
+          <article class="ascent-card descent-operational" data-descent-node="operative">
+            <div class="ascent-kicker">Niveau opératif</div>
+            <div class="ascent-title">PC Théâtre Sahel</div>
+            <div class="ascent-copy">Directive diffusée<br>Règle préparée pour les secteurs</div>
+          </article>
+          <div class="ascent-arrow down"><span>Règle opérative</span></div>
+          <article class="ascent-card descent-tactical" data-descent-node="terrain">
+            <div class="ascent-kicker">Niveau tactique</div>
+            <div class="ascent-title">Secteur B</div>
+            <div class="ascent-copy">Règle appliquée localement<br>TECHNICAL détecté</div>
+          </article>
+        </section>
+
+        <section class="multi-panel multi-detail">
+          <div class="multi-card" id="descentContent"></div>
+          <div>
+            <div class="multi-controls" aria-label="Étapes de redescente">
+              <button class="multi-btn active" data-descent-level="directive" type="button">1. Directive stratégique</button>
+              <button class="multi-btn" data-descent-level="operative" type="button">2. Traduction opérative</button>
+              <button class="multi-btn" data-descent-level="terrain" type="button">3. Application terrain</button>
+            </div>
+            <div class="multi-log" id="descentLog">Journal de redescente en attente.</div>
+          </div>
+        </section>
+      </div>
+
+      <footer class="multi-bottom">
+        <button class="multi-nav" id="descentPrev" type="button">← Page précédente : Remontée multi-niveaux</button>
+        <div class="multi-keyline">La règle redescend. Le terrain l'applique. Le référentiel reste maîtrisé.</div>
+        <button class="multi-nav next" id="descentNext" type="button">Page suivante : Sécurité & mode dégradé →</button>
+      </footer>
+    </div>
+  </section>
+
+  <section class="multi-page page" id="securityPage" aria-label="Sécurité et mode dégradé">
+    <div class="multi-shell">
+      <header class="multi-head">
+        <h2>Sécuriser sans bloquer la réactivité</h2>
+        <p>Même en réseau dégradé, SynOps conserve un noyau local : règles, référentiel, journalisation et validation humaine.</p>
+      </header>
+
+      <div class="security-grid">
+        <aside class="security-panel crisis-panel">
+          <span class="alert-chip">Alerte mode dégradé</span>
+          <h3>Poste avancé — mode dégradé</h3>
+          <div class="security-indicators">
+            <div class="security-indicator"><span>Réseau</span><strong>dégradé</strong></div>
+            <div class="security-indicator"><span>LLM global filtré</span><strong>indisponible</strong></div>
+            <div class="security-indicator"><span>Sources</span><strong>partielles</strong></div>
+            <div class="security-indicator"><span>Énergie</span><strong>limitée</strong></div>
+          </div>
+          <p class="security-copy">Le terrain doit continuer à qualifier l'information sans dépendre d'une puissance de calcul permanente.</p>
+          <div class="security-actions" aria-label="Scénarios dégradés">
+            <button class="security-btn active" data-security-scenario="network" type="button">1. Réseau dégradé</button>
+            <button class="security-btn" data-security-scenario="llm" type="button">2. LLM indisponible</button>
+            <button class="security-btn" data-security-scenario="source" type="button">3. Source manquante</button>
+            <button class="security-btn" data-security-scenario="uncertainty" type="button">4. Incertitude critique</button>
+          </div>
+        </aside>
+
+        <section class="security-panel core-panel">
+          <h3>Noyau local actif</h3>
+          <div class="core-list">
+            <div class="core-check">Règles locales</div>
+            <div class="core-check">Référentiel validé</div>
+            <div class="core-check">Zone tampon contrôlée</div>
+            <div class="core-check">Journalisation locale</div>
+            <div class="core-check">Validation analyste</div>
+          </div>
+          <p class="security-copy">Les cas connus continuent. Les cas ambigus attendent validation.</p>
+          <div class="flow-stage">
+            <div class="core-flow">
+              <div class="flow-step" data-flow-step="message">Message entrant</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-step" data-flow-step="buffer">Zone tampon contrôlée</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-step" data-flow-step="rules">Règles / référentiel local</div>
+              <div class="flow-arrow">↓</div>
+              <div class="flow-step" data-flow-step="output">Sortie limitée ou mise en attente</div>
+            </div>
+            <div class="scenario-card" id="securityScenario"></div>
+          </div>
+        </section>
+
+        <aside class="security-panel">
+          <h3>Contrôle de sécurité</h3>
+          <div class="security-blocks">
+            <div class="security-block"><h4>Donnée labellisée</h4><ul><li>origine · sensibilité · fiabilité · trace</li></ul></div>
+            <div class="security-block"><h4>Accès par rôle</h4><ul><li>analyste · opératif · stratégique · administrateur référentiel</li></ul></div>
+            <div class="security-block"><h4>Infrastructure maîtrisée</h4><ul><li>on-premise ou européen selon sensibilité</li><li>architecture cible inspirée ANSSI</li><li>prototype non homologué</li><li>données fictives et non sensibles</li></ul></div>
+            <div class="security-block"><h4>Zero Trust</h4><ul><li>aucune source fiable par défaut</li><li>accès minimum nécessaire</li><li>trace obligatoire</li></ul></div>
+            <div class="security-block no-go"><h4>No-go</h4><ul><li>si l'incertitude est trop forte, SynOps signale l'impossibilité de conclure.</li></ul></div>
+          </div>
+        </aside>
+      </div>
+
+      <footer class="security-bottom">
+        <button class="multi-nav" id="securityPrev" type="button">← Page précédente : Redescente stratégique</button>
+        <div>
+          <div class="security-keyline">Continuer quand c'est sûr. Signaler quand ça ne l'est plus.</div>
+          <div class="multi-log" id="securityLog">Journal sécurité en attente.</div>
+        </div>
+        <button class="multi-nav next" id="securityNext" type="button">Page suivante : Conclusion →</button>
+      </footer>
+    </div>
+  </section>
+
+  <section class="conclusion-page page" id="conclusionPage" aria-label="Conclusion SynOps">
+    <div class="conclusion-shell">
+      <header class="conclusion-hero">
+        <p class="conclusion-kicker">Débriefing final · SynOps</p>
+        <h2>Une même donnée. Un sens partagé. Une décision humaine.</h2>
+        <p>SynOps transforme des signaux hétérogènes en information exploitable, traçable et validée.</p>
+      </header>
+
+      <section class="conclusion-main">
+        <div class="pillars" aria-label="Piliers SynOps">
+          <article class="pillar">
+            <h3>IA ciblée</h3>
+            <p>Règles et référentiel d'abord.<br>LLM seulement sur les ambiguïtés.<br>Chaque appel IA doit être justifié.</p>
+          </article>
+          <article class="pillar">
+            <h3>Validation humaine</h3>
+            <p>Grist contrôle, trace et capitalise.<br>SynOps propose.<br>L'analyste arbitre.</p>
+          </article>
+          <article class="pillar">
+            <h3>Sens partagé</h3>
+            <p>Sortie pivot.<br>Remontée multi-niveaux.<br>Règles qui redescendent.</p>
+          </article>
+        </div>
+
+        <div class="final-line">
+          <span>La donnée reste traçable.</span>
+          <span>Le sens devient partageable.</span>
+          <span>La décision reste humaine.</span>
+        </div>
+      </section>
+
+      <footer class="conclusion-bottom">
+        <button class="multi-nav" id="conclusionPrev" type="button">← Page précédente : Sécurité & mode dégradé</button>
+        <div class="thanks-note" id="thanksNote">Merci · Women in GenAI 2026 · Données fictives et non sensibles</div>
+        <button class="thanks-btn" id="thanksBtn" type="button">Remerciements</button>
+      </footer>
+    </div>
+  </section>
+
+  <section class="poster-page page" id="posterPage" aria-label="Affiche finale et remerciements">
+    <div class="poster-sheet">
+      <header class="poster-head">
+        <div class="poster-title">
+          <div class="poster-stars">★ ★ ★</div>
+          <h2>Finale SynOps</h2>
+          <p>Hackathon Women in Gen AI 2026</p>
+        </div>
+        <div class="poster-stamp">Équipe Deux au Carré<br>Cas d'usage : Ministère des Armées<br>Finale · Démonstrateur SynOps</div>
+      </header>
+
+      <section class="poster-body">
+        <div class="poster-visual">
+          <div class="poster-photo">
+            <img src="assets/selfie-equipe.png" alt="Équipe SynOps">
+          </div>
+          <div class="mission-ribbon">Mission accomplie</div>
+        </div>
+
+        <div class="poster-content">
+          <div class="poster-lead">Les données ne parlent pas toujours le même langage.<br>Nous avons appris à construire un pont entre elles.</div>
+          <div class="poster-token">Du signal au sens partagé</div>
+
+          <div class="poster-blocks">
+            <div class="poster-block">
+              <h3>Ce que ce projet nous a apporté</h3>
+              <ul>
+                <li>montée en compétences</li>
+                <li>prototypage rapide</li>
+                <li>IA générative appliquée</li>
+                <li>cybersécurité et souveraineté</li>
+                <li>storytelling opérationnel</li>
+                <li>travail d'équipe</li>
+              </ul>
+            </div>
+            <div class="poster-block">
+              <h3>Remerciements</h3>
+              <p>Merci aux organisatrices et organisateurs du hackathon Women in Gen AI 2026.</p>
+              <p>Merci à Julie, Mariama et Noura pour l'accompagnement, l'énergie et la confiance.</p>
+              <p>Merci aux partenaires pour les retours, les échanges et l'opportunité de travailler sur un cas aussi exigeant.</p>
+            </div>
+          </div>
+
+          <div class="coach-block">
+            <h3>Coachs</h3>
+            <p>Un immense merci à nos deux coachs :</p>
+            <div class="coach-names">Baptiste — Microsoft<br>Rafael — EY</div>
+            <p>Merci pour votre présence du début à la fin, vos conseils, vos encouragements et votre exigence. Vous nous avez aidées à clarifier notre idée, renforcer notre pitch et porter SynOps jusqu'à la finale.</p>
+          </div>
+        </div>
+      </section>
+
+      <footer class="poster-bottom">
+        <button class="poster-nav" id="posterPrev" type="button">← Page précédente : Conclusion</button>
+        <div class="poster-final">La donnée reste traçable. Le sens devient partageable. La décision reste humaine.</div>
+        <button class="poster-nav subtle" type="button">Annexes Q/R</button>
+        <button class="poster-nav" id="posterHome" type="button">Revenir à l'accueil</button>
+      </footer>
+    </div>
+  </section>
+
+  <script>
+    const scene = document.querySelector("#scene");
+    const techPage = document.querySelector("#techPage");
+    const llmPage = document.querySelector("#llmPage");
+    const gristPage = document.querySelector("#gristPage");
+    const multiPage = document.querySelector("#multiPage");
+    const descentPage = document.querySelector("#descentPage");
+    const securityPage = document.querySelector("#securityPage");
+    const conclusionPage = document.querySelector("#conclusionPage");
+    const posterPage = document.querySelector("#posterPage");
+    const nextBtn = document.querySelector("#nextBtn");
+    const backBtn = document.querySelector("#backBtn");
+    const dots = [...document.querySelectorAll(".dot")];
+    const labels = [
+      "Initialiser le briefing →",
+      "Activer les capteurs →",
+      "Afficher la mission →",
+      "Page suivante : Secteur B →",
+    ];
+    let step = 0;
+
+    function render() {
+      scene.dataset.step = String(step);
+      nextBtn.textContent = labels[step];
+      dots.forEach((dot, index) => dot.classList.toggle("active", index <= step));
+      scene.scrollTop = 0;
+    }
+
+    function next() {
+      if (step < 3) {
+        step += 1;
+        render();
+      } else {
+        scene.classList.remove("active");
+        techPage.classList.add("active");
+        renderTech();
+      }
+    }
+
+    function back() {
+      if (step > 0) {
+        step -= 1;
+        render();
+      }
+    }
+
+    nextBtn.addEventListener("click", next);
+    backBtn.addEventListener("click", back);
+    document.querySelector("#backToIntro").addEventListener("click", () => {
+      techPage.classList.remove("active");
+      llmPage.classList.remove("active");
+      gristPage.classList.remove("active");
+      multiPage.classList.remove("active");
+      descentPage.classList.remove("active");
+      securityPage.classList.remove("active");
+      scene.classList.add("active");
+      step = 3;
+      render();
+    });
+    scene.addEventListener("click", (event) => {
+      if (event.target.closest("button")) return;
+      next();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (!scene.classList.contains("active")) return;
+      if (event.key === "ArrowRight" || event.key === " ") {
+        event.preventDefault();
+        next();
+      }
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        back();
+      }
+    });
+
+    render();
+
+    const techSteps = [
+      {
+        badge: "Entrée brute",
+        text: "Quatre sources décrivent le Secteur B avec des formats différents.",
+        result: "Drone ISR : HOSTILE_MOVEMENT\nUnité Terre : ENGAGEMENT_APPUI_FEU\nForces alliées : TECHNICAL\nSIGINT : BRAVO_SECURE",
+        journal: "[14:21] 4 messages reçus depuis le Secteur B.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+      {
+        badge: "Sécurité d'entrée",
+        text: "Les messages sont vérifiés, labellisés et journalisés avant tout traitement IA.",
+        result: "Source vérifiée\nNiveau de sensibilité ajouté\nHorodatage conservé\nTrace créée",
+        journal: "[14:22] Données labellisées et trace créée.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+      {
+        badge: "Aucun appel LLM",
+        text: "SynOps rattache les messages à un même incident probable.",
+        result: "INCIDENT_ID : B-01\nZONE : SECTEUR_B\nSOURCES : 4\nFENÊTRE : 14h21Z-14h22Z\nNIVEAU : tactique",
+        journal: "[14:23] Incident B-01 créé.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+      {
+        badge: "Minimisation avant IA",
+        text: "SynOps conserve les champs utiles au raisonnement sémantique et limite ce qui peut être transmis au LLM.",
+        resultHtml: `<div class="result-grid"><div class="result-col"><b>Conservé et journalisé</b><ul class="result-list"><li>source</li><li>zone</li><li>horodatage</li><li>terme opérationnel</li><li>fiabilité</li><li>niveau de sensibilité</li><li>trace du traitement</li></ul></div><div class="result-col"><b>Non transmis au LLM</b><ul class="result-list"><li>message brut complet</li><li>champs hors périmètre de l'analyse</li><li>informations non nécessaires au rapprochement sémantique</li></ul></div></div>`,
+        journal: "[14:24] Brut complet non transmis au LLM.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+      {
+        badge: "LLM local / maîtrisé",
+        text: "Les cas connus passent par les règles. Les cas ambigus sont orientés vers une IA ciblée.",
+        resultHtml: `<div class="result-grid"><div class="result-col"><b>Règles / référentiel</b>HOSTILE_MOVEMENT → présence hostile<br>ENGAGEMENT_APPUI_FEU → demande tir appui</div><div class="result-col"><b>LLM ciblé</b>TECHNICAL → terme allié ambigu<br>BRAVO_SECURE → contradiction possible</div></div>`,
+        journal: "[14:25] LLM appelé uniquement sur TECHNICAL et BRAVO_SECURE.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+      {
+        badge: "Validation humaine obligatoire",
+        text: "SynOps prépare une lecture structurée pour l'analyste opérationnel.",
+        result: "Présence hostile — 0.78 — à valider\nDemande tir appui — 0.91 — à valider\nTECHNICAL — 0.74 — validation interalliée requise\nBRAVO_SECURE — 0.35 — investigation analyste",
+        journal: "[14:26] Sortie structurée prête pour validation.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+    ];
+    let techStep = 0;
+
+    function renderTech() {
+      const data = techSteps[techStep];
+      const journal = document.querySelector("#techJournal");
+      document.querySelector("#techStepCount").textContent = `Étape ${techStep + 1} / ${techSteps.length}`;
+      document.querySelector("#techBadge").textContent = data.badge;
+      document.querySelector("#techText").textContent = data.text;
+      document.querySelector("#techResult").innerHTML = data.resultHtml || data.result.replace(/\n/g, "<br>");
+      document.querySelector("#techNext").textContent = techStep === techSteps.length - 1 ? "Page suivante : IA ciblée →" : "Étape suivante →";
+      journal.innerHTML = techSteps
+        .slice(0, techStep + 1)
+        .map((step) => `<div class="journal-line">${step.journal}</div>`)
+        .join("");
+      journal.scrollTop = journal.scrollHeight;
+      document.querySelectorAll(".tech-message").forEach((message) => {
+        message.classList.toggle("active", data.sources.includes(message.dataset.source));
+      });
+    }
+
+    document.querySelector("#techPrev").addEventListener("click", () => {
+      techStep = Math.max(0, techStep - 1);
+      renderTech();
+    });
+    document.querySelector("#techReset").addEventListener("click", () => {
+      techStep = 0;
+      renderTech();
+    });
+    document.querySelector("#techNext").addEventListener("click", () => {
+      if (techStep === techSteps.length - 1) {
+        techPage.classList.remove("active");
+        llmPage.classList.add("active");
+        renderLLM("technical");
+      } else {
+        techStep = Math.min(techSteps.length - 1, techStep + 1);
+        renderTech();
+      }
+    });
+
+    const qaContent = {
+      in: "Messages terrain hétérogènes : source · zone · terme · urgence · fiabilité · horodatage · sensibilité",
+      route: "Terme connu → règles / référentiel · Terme ambigu → LLM local ou maîtrisé · Synthèse filtrée → niveau opératif ensuite",
+      out: "Proposition · score · explication · statut · validation requise",
+    };
+    document.querySelectorAll(".qa-btn").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll(".qa-btn").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        document.querySelector("#qaPanel").textContent = qaContent[button.dataset.qa];
+      });
+    });
+
+    const llmModes = {
+      technical: {
+        label: "Extrait filtré transmis au LLM",
+        excerpt: `<strong>TERME :</strong> TECHNICAL<br><strong>SOURCE :</strong> ALLIED_PATROL<br><strong>ZONE :</strong> SECTEUR_B<br><strong>CONTEXTE :</strong> présence hostile probable<br><strong>FIABILITÉ :</strong> moyenne<br><strong>OBJECTIF :</strong> proposer une hypothèse sémantique`,
+        log: [
+          "[14:25] Appel LLM ciblé sur TECHNICAL — extrait filtré transmis.",
+          "[14:25] Hypothèse générée : véhicule léger armé probable.",
+        ],
+      },
+      bravo: {
+        label: "Extrait filtré transmis au LLM",
+        excerpt: `<strong>TERME :</strong> BRAVO_SECURE<br><strong>SOURCE :</strong> SIGINT_NODE<br><strong>ZONE :</strong> SECTEUR_B<br><strong>CONTEXTE :</strong> signal drone contradictoire<br><strong>FIABILITÉ :</strong> moyenne<br><strong>OBJECTIF :</strong> détecter une contradiction possible`,
+        log: [
+          "[14:26] Analyse BRAVO_SECURE — contradiction possible détectée.",
+        ],
+      },
+      pivot: {
+        label: "Sortie pivot structurée",
+        excerpt: `<div class="pivot-center"><div class="pivot-center-title">SORTIE PIVOT — INCIDENT B-01</div><strong>NIVEAU :</strong> tactique<br><strong>ZONE :</strong> SECTEUR_B<br><strong>FENÊTRE :</strong> 14h21Z–14h26Z<br><strong>STATUT :</strong> À_VALIDER<br><strong>DESTINATION :</strong> Grist / analyste opérationnel<div class="pivot-center-section">Éléments structurés :</div>PRÉSENCE_HOSTILE_PROBABLE — à valider — 0.78<br>DEMANDE_TIR_APPUI — à valider — 0.91<br>VÉHICULE_LÉGER_ARMÉ / TECHNICAL — validation interalliée — 0.74<br>CONTRADICTION_SIGINT — investigation analyste — 0.35<div class="mim-line">Compatible logique MIM · Validation humaine requise.</div></div>`,
+        log: [
+          "[14:25] Appel LLM ciblé sur TECHNICAL — extrait filtré transmis.",
+          "[14:25] Hypothèse générée : véhicule léger armé probable.",
+          "[14:26] Analyse BRAVO_SECURE — contradiction possible détectée.",
+          "[14:26] Sortie pivot B-01 préparée pour validation humaine.",
+        ],
+      },
+    };
+
+    function renderLLM(mode) {
+      llmPage.dataset.focus = mode;
+      document.querySelector("#llmQuestionLabel").textContent = llmModes[mode].label;
+      document.querySelector("#llmQuestion").innerHTML = llmModes[mode].excerpt;
+      document.querySelector("#llmLog").innerHTML = llmModes[mode].log
+        .map((line) => `<div class="llm-log-line">${line}</div>`)
+        .join("");
+      document.querySelectorAll(".llm-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.llmMode === mode);
+      });
+      document.querySelector(".case-technical").classList.toggle("active", mode === "technical" || mode === "pivot");
+      document.querySelector(".case-bravo").classList.toggle("active", mode === "bravo" || mode === "pivot");
+      document.querySelector(".answer-technical").classList.toggle("active", mode === "technical" || mode === "pivot");
+      document.querySelector(".answer-bravo").classList.toggle("active", mode === "bravo" || mode === "pivot");
+      document.querySelector("#pivotCard").classList.toggle("active", mode === "pivot");
+    }
+
+    document.querySelectorAll(".llm-btn").forEach((button) => {
+      button.addEventListener("click", () => renderLLM(button.dataset.llmMode));
+    });
+
+    document.querySelector("#llmBack").addEventListener("click", () => {
+      llmPage.classList.remove("active");
+      gristPage.classList.remove("active");
+      techPage.classList.add("active");
+      techStep = techSteps.length - 1;
+      renderTech();
+    });
+
+    document.querySelector(".llm-next").addEventListener("click", () => {
+      llmPage.classList.remove("active");
+      gristPage.classList.add("active");
+      resetGrist();
+    });
+
+    const gristDossiers = {
+      hostile: {
+        title: "Présence hostile probable",
+        status: "à valider",
+        explanation: "HOSTILE_MOVEMENT rapproché d'une présence hostile.",
+        detail: `<h4>Dossier analyste</h4><div class="case-summary"><div><strong>Proposition :</strong> Présence hostile probable</div><div><strong>Statut :</strong> à valider</div><div><strong>Explication :</strong> HOSTILE_MOVEMENT rapproché d'une présence hostile.</div></div>`,
+        logs: {
+          "Valider": "[14:27] Présence hostile probable validée par analyste.",
+          "Capitaliser": "[14:27] Présence hostile probable — capitalisation soumise au référentiel.",
+          "Demander contexte": "[14:27] Contexte demandé sur présence hostile probable.",
+          "Maintenir en attente": "[14:27] Présence hostile probable maintenue en attente.",
+          "Rejeter": "[14:27] Présence hostile probable rejetée par analyste.",
+        },
+      },
+      tir: {
+        title: "Demande tir appui",
+        status: "validable",
+        explanation: "ENGAGEMENT_APPUI_FEU rapproché d'une demande de tir appui.",
+        detail: `<h4>Mapping proposé</h4><strong>ENGAGEMENT_APPUI_FEU ↔ DEMANDE_TIR_APPUI</strong><div class="case-summary"><div><strong>Statut :</strong> mapping validable</div></div>`,
+        logs: {
+          "Valider": "[14:27] DEMANDE_TIR_APPUI validée par analyste.",
+          "Capitaliser": "[14:27] ENGAGEMENT_APPUI_FEU ↔ DEMANDE_TIR_APPUI — capitalisation bidirectionnelle validée.",
+          "Demander contexte": "[14:27] Contexte demandé pour DEMANDE_TIR_APPUI.",
+          "Maintenir en attente": "[14:27] DEMANDE_TIR_APPUI maintenue en attente.",
+          "Rejeter": "[14:27] DEMANDE_TIR_APPUI rejetée par analyste.",
+        },
+      },
+      technical: {
+        title: "TECHNICAL → véhicule léger armé probable",
+        status: "validation interalliée requise",
+        explanation: "hypothèse sémantique proposée.",
+        detail: `<h4>Mapping proposé</h4><strong>TECHNICAL → VÉHICULE_LÉGER_ARMÉ_PROBABLE</strong><div class="case-summary"><div><strong>Statut :</strong> usage local possible<br>capitalisation bidirectionnelle bloquée</div><div><strong>Raison :</strong> validation interalliée requise</div></div>`,
+        capitalisationBlocked: true,
+        logs: {
+          "Valider": "[14:28] TECHNICAL autorisé en usage local par analyste.",
+          "Demander contexte": "[14:28] Contexte demandé pour TECHNICAL.",
+          "Maintenir en attente": "[14:28] TECHNICAL maintenu en attente — validation interalliée requise.",
+          "Rejeter": "[14:28] TECHNICAL rejeté pour capitalisation.",
+        },
+      },
+      bravo: {
+        title: "BRAVO_SECURE",
+        status: "investigation analyste",
+        explanation: "contradiction possible avec le signal Drone ISR.",
+        detail: `<h4>Alerte</h4><strong>BRAVO_SECURE</strong><div class="case-summary"><div><strong>Statut :</strong> contradiction SIGINT possible<br>investigation analyste requise</div></div>`,
+        capitalisationBlocked: true,
+        logs: {
+          "Valider": "[14:29] BRAVO_SECURE vérifié par analyste.",
+          "Demander contexte": "[14:29] Contexte demandé pour BRAVO_SECURE.",
+          "Maintenir en attente": "[14:29] BRAVO_SECURE maintenu en attente — contradiction à investiguer.",
+          "Rejeter": "[14:29] BRAVO_SECURE rejeté après vérification analyste.",
+        },
+      },
+    };
+    const gristActionLabels = ["Valider", "Capitaliser", "Demander contexte", "Maintenir en attente", "Rejeter"];
+    let analystLogLines = [];
+
+    function resetGrist() {
+      document.querySelectorAll(".grist-table tbody tr").forEach((row) => {
+        row.classList.remove("validated", "review", "hold", "selected");
+      });
+      document.querySelectorAll(".dossier-btn").forEach((button) => button.classList.remove("active"));
+      document.querySelector("#refContent").textContent = "Sélectionnez un dossier dans le tableau pour afficher la proposition, son statut, son explication et les actions disponibles.";
+      analystLogLines = [];
+      document.querySelector("#analystLog").textContent = "Journal analyste en attente.";
+    }
+
+    function renderGrist(dossier) {
+      const state = gristDossiers[dossier];
+      document.querySelectorAll(".grist-table tbody tr").forEach((row) => {
+        row.classList.remove("validated", "review", "hold", "selected");
+      });
+      document.querySelector(`[data-grist-row="${dossier}"]`).classList.add("selected");
+      document.querySelectorAll(".dossier-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.dossier === dossier);
+      });
+      document.querySelector("#refContent").innerHTML = `
+        ${state.detail}
+        <div class="case-actions-title">Actions disponibles</div>
+        <div class="grist-actions">
+          ${gristActionLabels.map((item) => {
+            const blocked = item === "Capitaliser" && state.capitalisationBlocked;
+            const label = blocked ? "Capitaliser — bloqué" : item;
+            return `<button class="grist-action" data-log="${dossier}" data-action="${item}" type="button"${blocked ? " disabled" : ""}>${label}</button>`;
+          }).join("")}
+        </div>
+        <div class="case-actions-title">Mapping validé : bidirectionnel.<br>Mapping incertain : capitalisation bloquée.</div>
+      `;
+      document.querySelectorAll("#refContent .grist-action").forEach((button) => {
+        button.addEventListener("click", () => appendAnalystLog(button.dataset.log, button.dataset.action));
+      });
+    }
+
+    function appendAnalystLog(dossier, action) {
+      analystLogLines.push(gristDossiers[dossier].logs[action]);
+      const log = document.querySelector("#analystLog");
+      log.innerHTML = analystLogLines.map((line) => `<div class="analyst-log-line">${line}</div>`).join("");
+      log.scrollTop = log.scrollHeight;
+    }
+
+    document.querySelectorAll(".dossier-btn").forEach((button) => {
+      button.addEventListener("click", () => renderGrist(button.dataset.dossier));
+    });
+
+    document.querySelector("#gristPrev").addEventListener("click", () => {
+      gristPage.classList.remove("active");
+      llmPage.classList.add("active");
+      renderLLM("pivot");
+    });
+
+    const multiLevels = {
+      tactical: {
+        html: `<h3>Niveau tactique — Secteur B</h3><h4>Sortie issue de Grist</h4><ul><li>Présence hostile probable : validée</li><li>Demande tir appui : validée</li><li>TECHNICAL : usage local possible, capitalisation bloquée</li><li>BRAVO_SECURE : contradiction ouverte</li></ul><h4>Objet transmis</h4><ul><li>SORTIE PIVOT B-01</li></ul><div class="multi-message">Le terrain transmet une sortie pivot, pas les quatre messages bruts.</div><span class="multi-badge">IA ciblée : ambiguïtés locales</span>`,
+        log: "[14:30] Sortie pivot B-01 validée pour remontée opérative.",
+      },
+      operational: {
+        html: `<h3>Niveau opératif — PC Théâtre Sahel</h3><h4>Agrégation multi-secteurs</h4><ul><li>Secteur A : activité suspecte nord</li><li>Secteur B : incident actif + contradiction SIGINT</li><li>Secteur C : signal partiel</li></ul><h4>Lecture opérative</h4><ul><li>Priorité : Secteur B</li><li>Convergence partielle : Secteurs A + B</li><li>Incertitude : Secteur C insuffisamment confirmé</li><li>Point de vigilance : terme allié TECHNICAL</li></ul><div class="multi-message">Le PC Théâtre agrège les secteurs et priorise les risques.</div><span class="multi-badge">IA ciblée : synthèse multi-secteurs</span>`,
+        log: "[14:34] PC Théâtre agrège A, B et C — priorité Secteur B.",
+      },
+      strategic: {
+        html: `<h3>Niveau stratégique — Paris</h3><h4>Vision consolidée</h4><ul><li>Ambiguïtés alliées récurrentes</li><li>Risque de capitalisation incohérente</li><li>Besoin d'une règle commune</li></ul><h4>Constat</h4><ul><li>Le terme TECHNICAL apparaît sur plusieurs secteurs avec des interprétations variables.</li></ul><div class="multi-message">Paris ne reçoit pas tous les détails tactiques : il reçoit une tendance exploitable pour arbitrage.</div><span class="multi-badge">IA ciblée : détection de tendance</span>`,
+        log: "[14:42] Tendance transverse détectée — ambiguïtés alliées récurrentes.",
+      },
+    };
+    let multiLogLines = [];
+
+    function renderMulti(level, addLog = true) {
+      document.querySelector("#multiContent").innerHTML = multiLevels[level].html;
+      document.querySelectorAll(".multi-btn").forEach((button) => {
+        button.classList.toggle("active", button.dataset.multiLevel === level);
+      });
+      document.querySelectorAll(".ascent-card").forEach((node) => {
+        node.classList.toggle("active", node.dataset.levelNode === level);
+      });
+      if (addLog) {
+        multiLogLines.push(multiLevels[level].log);
+        const log = document.querySelector("#multiLog");
+        log.innerHTML = multiLogLines.map((line) => `<div class="multi-log-line">${line}</div>`).join("");
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+
+    function resetMulti() {
+      multiLogLines = [];
+      document.querySelector("#multiLog").textContent = "Journal multi-niveaux en attente.";
+      renderMulti("tactical", false);
+    }
+
+    document.querySelector("#gristNext").addEventListener("click", () => {
+      gristPage.classList.remove("active");
+      multiPage.classList.add("active");
+      resetMulti();
+    });
+
+    document.querySelectorAll(".multi-btn").forEach((button) => {
+      button.addEventListener("click", () => renderMulti(button.dataset.multiLevel));
+    });
+
+    document.querySelector("#multiPrev").addEventListener("click", () => {
+      multiPage.classList.remove("active");
+      gristPage.classList.add("active");
+    });
+
+    const descentLevels = {
+      directive: {
+        html: `<h3>Niveau stratégique — Paris</h3><h4>Constat</h4><ul><li>Le terme TECHNICAL apparaît sur plusieurs secteurs avec des interprétations variables.</li></ul><h4>Risque</h4><ul><li>capitalisation incohérente dans les référentiels tactiques.</li></ul><h4>Directive validée</h4><ul><li>tout terme allié non répertorié doit faire l'objet d'une validation interalliée avant enrichissement durable du référentiel tactique.</li></ul><span class="multi-badge">IA ciblée : aide à la formulation</span> <span class="multi-badge">Validation humaine obligatoire</span>`,
+        log: "[15:05] Directive stratégique validée — contrôle des termes alliés ambigus.",
+      },
+      operative: {
+        html: `<h3>Niveau opératif — PC Théâtre Sahel</h3><h4>Directive reçue</h4><ul><li>contrôle des termes alliés non répertoriés.</li></ul><h4>Transformation en règle SynOps</h4><ul><li>SI terme allié absent du référentiel national</li><li>ALORS validation interalliée requise</li><li>ET capitalisation tactique bloquée</li></ul><h4>Diffusion</h4><ul><li>Secteurs A, B et C.</li></ul><span class="multi-badge">IA ciblée : transformation directive → règle</span> <span class="multi-badge">Validation opérative requise</span>`,
+        log: "[15:12] Directive traduite en règle SynOps — diffusion vers les secteurs.",
+      },
+      terrain: {
+        html: `<h3>Niveau tactique — Secteur B</h3><h4>Nouveau message allié</h4><ul><li>TERM : TECHNICAL</li><li>SOURCE : ALLIED_PATROL</li><li>ZONE : SECTEUR_B</li></ul><h4>Règle appliquée</h4><ul><li>validation interalliée requise</li></ul><h4>Effet</h4><ul><li>usage local possible avec prudence</li><li>capitalisation bidirectionnelle bloquée</li><li>journalisation obligatoire</li></ul><div class="multi-message">La règle redescendue modifie le comportement local de SynOps.</div><span class="multi-badge">Règle locale active</span>`,
+        log: "[15:18] TECHNICAL détecté — capitalisation bloquée avant validation interalliée.",
+      },
+    };
+    let descentLogLines = [];
+
+    function renderDescent(level, addLog = true) {
+      document.querySelector("#descentContent").innerHTML = descentLevels[level].html;
+      document.querySelectorAll("[data-descent-level]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.descentLevel === level);
+      });
+      document.querySelectorAll("[data-descent-node]").forEach((node) => {
+        node.classList.toggle("active", node.dataset.descentNode === level);
+      });
+      if (addLog) {
+        descentLogLines.push(descentLevels[level].log);
+        const log = document.querySelector("#descentLog");
+        log.innerHTML = descentLogLines.map((line) => `<div class="multi-log-line">${line}</div>`).join("");
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+
+    function resetDescent() {
+      descentLogLines = [];
+      document.querySelector("#descentLog").textContent = "Journal de redescente en attente.";
+      renderDescent("directive", false);
+    }
+
+    document.querySelector("#multiNext").addEventListener("click", () => {
+      multiPage.classList.remove("active");
+      descentPage.classList.add("active");
+      resetDescent();
+    });
+
+    document.querySelectorAll("[data-descent-level]").forEach((button) => {
+      button.addEventListener("click", () => renderDescent(button.dataset.descentLevel));
+    });
+
+    document.querySelector("#descentPrev").addEventListener("click", () => {
+      descentPage.classList.remove("active");
+      multiPage.classList.add("active");
+      renderMulti("strategic", false);
+    });
+
+    const securityScenarios = {
+      network: {
+        flow: "buffer",
+        html: `<h4>Réseau dégradé</h4><strong>Mode appliqué :</strong><ul><li>référentiel local + synchronisation différée</li></ul><strong>Effet :</strong><ul><li>les règles validées restent disponibles.</li><li>les événements sont journalisés localement.</li><li>la remontée reprend dès que la liaison revient.</li></ul>`,
+        log: "[15:31] Réseau dégradé — bascule en synchronisation différée.",
+      },
+      llm: {
+        flow: "rules",
+        html: `<h4>LLM indisponible</h4><strong>Mode appliqué :</strong><ul><li>règles + référentiel local</li></ul><strong>Effet :</strong><ul><li>les cas connus continuent.</li><li>les cas ambigus sont mis en attente.</li><li>aucune hypothèse IA nouvelle n'est produite.</li></ul>`,
+        log: "[15:34] LLM indisponible — traitement limité aux règles locales.",
+      },
+      source: {
+        flow: "message",
+        html: `<h4>Source manquante</h4><strong>Mode appliqué :</strong><ul><li>confiance réduite</li></ul><strong>Effet :</strong><ul><li>la synthèse reste possible si les preuves suffisent.</li><li>sinon, la sortie est marquée comme incomplète.</li><li>l'analyste est alerté.</li></ul>`,
+        log: "[15:37] Source manquante — score de confiance réduit.",
+      },
+      uncertainty: {
+        flow: "output",
+        html: `<h4>Incertitude critique</h4><strong>Mode appliqué :</strong><ul><li>no-go</li></ul><strong>Effet :</strong><ul><li>pas de synthèse fragile.</li><li>pas de capitalisation.</li><li>dossier maintenu en investigation.</li></ul>`,
+        log: "[15:40] No-go déclenché — incertitude trop forte.",
+      },
+    };
+    let securityLogLines = [];
+
+    function renderSecurity(scenario, addLog = true) {
+      document.querySelector("#securityScenario").innerHTML = securityScenarios[scenario].html;
+      document.querySelectorAll("[data-security-scenario]").forEach((button) => {
+        button.classList.toggle("active", button.dataset.securityScenario === scenario);
+      });
+      document.querySelectorAll("[data-flow-step]").forEach((step) => {
+        step.classList.toggle("active", step.dataset.flowStep === securityScenarios[scenario].flow);
+      });
+      if (addLog) {
+        securityLogLines.push(securityScenarios[scenario].log);
+        const log = document.querySelector("#securityLog");
+        log.innerHTML = securityLogLines.map((line) => `<div class="multi-log-line">${line}</div>`).join("");
+        log.scrollTop = log.scrollHeight;
+      }
+    }
+
+    function resetSecurity() {
+      securityLogLines = [];
+      document.querySelector("#securityLog").textContent = "Journal sécurité en attente.";
+      renderSecurity("network", false);
+    }
+
+    document.querySelector("#descentNext").addEventListener("click", () => {
+      descentPage.classList.remove("active");
+      securityPage.classList.add("active");
+      resetSecurity();
+    });
+
+    document.querySelectorAll("[data-security-scenario]").forEach((button) => {
+      button.addEventListener("click", () => renderSecurity(button.dataset.securityScenario));
+    });
+
+    document.querySelector("#securityPrev").addEventListener("click", () => {
+      securityPage.classList.remove("active");
+      descentPage.classList.add("active");
+      renderDescent("terrain", false);
+    });
+
+    document.querySelector("#securityNext").addEventListener("click", () => {
+      securityPage.classList.remove("active");
+      conclusionPage.classList.add("active");
+      document.querySelector("#thanksNote").classList.remove("visible");
+    });
+
+    document.querySelector("#conclusionPrev").addEventListener("click", () => {
+      conclusionPage.classList.remove("active");
+      securityPage.classList.add("active");
+      resetSecurity();
+    });
+
+    document.querySelector("#thanksBtn").addEventListener("click", () => {
+      conclusionPage.classList.remove("active");
+      posterPage.classList.add("active");
+      document.querySelector("#thanksNote").classList.remove("visible");
+    });
+
+    document.querySelector("#posterPrev").addEventListener("click", () => {
+      posterPage.classList.remove("active");
+      conclusionPage.classList.add("active");
+    });
+
+    document.querySelector("#posterHome").addEventListener("click", () => {
+      posterPage.classList.remove("active");
+      scene.classList.add("active");
+      step = 0;
+      scene.dataset.step = "0";
+      nextBtn.textContent = labels[0];
+      backBtn.disabled = true;
+      dots.forEach((dot, index) => dot.classList.toggle("active", index === 0));
+    });
+  </script>
+</body>
+</html>
