@@ -17,18 +17,25 @@ export default async (req) => {
   try {
     const { term, source, zone, context } = await req.json();
 
-    const prompt = `Tu es un assistant d'analyse sémantique militaire.
+    const prompt = `Tu es un assistant d'analyse sémantique militaire spécialisé dans les opérations au Sahel.
 
-Un message opérationnel contient le terme "${term}" provenant de la source "${source}", zone "${zone}".
-Contexte opérationnel : ${context}
+CONTEXTE OPÉRATIONNEL :
+- Opération au Mali, zone ${zone}, forces françaises et forces alliées africaines
+- Source du message : ${source} (patrouille alliée d'Afrique subsaharienne)
+- Situation : présence hostile confirmée par drone ISR, demande d'appui feu en cours
+- Contexte supplémentaire : ${context}
 
-Ta mission : proposer un alignement vers la terminologie française standardisée.
+TERME À ANALYSER : "${term}"
+
+INFORMATION CLEF : Dans le vocabulaire militaire sahélien et tchadien, "TECHNICAL" désigne un véhicule léger (souvent un pickup Toyota) équipé d'une mitrailleuse ou d'une arme lourde à l'arrière. C'est un terme courant dans les forces irrégulières et alliées de la région, absent du référentiel de terminologie militaire française standard.
+
+Ta mission : proposer l'équivalent dans la terminologie militaire française standardisée.
 
 Réponds uniquement en JSON valide, sans texte avant ni après, avec exactement ces champs :
 {
-  "terme_cible": "TERME_EN_MAJUSCULES",
+  "terme_cible": "TERME_EN_MAJUSCULES_UNDERSCORES",
   "score_confiance": 0.XX,
-  "justification": "une phrase courte en langage militaire clair"
+  "justification": "une phrase courte expliquant le rapprochement en langage militaire clair"
 }`;
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -71,7 +78,7 @@ Réponds uniquement en JSON valide, sans texte avant ni après, avec exactement 
         terme_cible: "VÉHICULE_LÉGER_ARMÉ",
         score_confiance: 0.74,
         justification:
-          "Inférence contextuelle sahélienne — terme allié absent du référentiel national.",
+          "Inférence contextuelle sahélienne — terme allié absent du référentiel national français.",
         fallback: true,
       }),
       {
