@@ -2772,6 +2772,95 @@
       .poster-blocks { grid-template-columns: 1fr; }
       .poster-bottom { grid-template-columns: 1fr; }
     }
+    .llm-mode-wrap {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.btn-live {
+  padding: 9px 20px;
+  background: #ff4444;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.btn-live:hover { background: #ff2222; transform: translateY(-1px); }
+.btn-live:disabled { background: #555; cursor: not-allowed; transform: none; }
+
+.btn-demo {
+  padding: 9px 20px;
+  background: transparent;
+  color: #5bdcff;
+  border: 1px solid rgba(91, 220, 255, 0.35);
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+.btn-demo:hover { border-color: #5bdcff; background: rgba(91,220,255,0.06); }
+
+.llm-live-result {
+  margin-top: 14px;
+  padding: 14px 16px;
+  background: rgba(91, 220, 255, 0.05);
+  border: 1px solid rgba(91, 220, 255, 0.2);
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.6;
+  display: none;
+}
+.llm-live-result.visible { display: block; }
+.llm-live-result .result-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: #5bdcff;
+  letter-spacing: 1px;
+  margin-bottom: 7px;
+}
+.llm-live-result .result-term {
+  font-size: 16px;
+  font-weight: 800;
+  color: #5bdcff;
+  margin-bottom: 4px;
+}
+.llm-live-result .result-score {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: #b8c3cf;
+  margin-bottom: 8px;
+}
+.llm-live-result .result-just {
+  color: #b8c3cf;
+  font-style: italic;
+}
+.llm-live-result .result-fallback {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #888;
+}
+.llm-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -3025,6 +3114,23 @@
               <strong>OBJECTIF :</strong> proposer une hypothèse sémantique
             </div>
           </div>
+          <div class="llm-mode-wrap">
+  <button class="btn-live" id="btnLive" type="button">
+    <span class="btn-live-inner">🔴 Analyser en direct</span>
+  </button>
+  <button class="btn-demo" id="btnDemo" type="button">
+    ▶ Mode démo
+  </button>
+</div>
+<div class="llm-live-result" id="llmLiveResult">
+  <div class="result-label">RÉSULTAT LLM — TEMPS RÉEL</div>
+  <div class="result-term" id="resTerm">—</div>
+  <div class="result-score" id="resScore">—</div>
+  <div class="result-just" id="resJust">—</div>
+  <div class="result-fallback" id="resFallback" style="display:none">
+    ⚠ Réponse de secours (appel API indisponible)
+  </div>
+</div>
         </section>
 
         <section class="llm-panel">
@@ -3997,6 +4103,86 @@
       backBtn.disabled = true;
       dots.forEach((dot, index) => dot.classList.toggle("active", index === 0));
     });
+    // ── Intégration appel LLM réel ──────────────────────
+
+const DEMO_FALLBACK = {
+  terme_cible: "VÉHICULE_LÉGER_ARMÉ",
+  score_confiance: 0.74,
+  justification:
+    "TECHNICAL désigne dans le contexte sahélien un véhicule léger à plateau armé, absent du référentiel français initial. Le contexte — forces alliées tchadiennes, zone de combat — permet l'inférence.",
+};
+
+function showLiveResult(data, isFallback = false) {
+  const box = document.getElementById("llmLiveResult");
+  document.getElementById("resTerm").textContent = data.terme_cible || "—";
+  document.getElementById("resScore").textContent =
+    `Score de confiance : ${data.score_confiance ?? "—"}`;
+  document.getElementById("resJust").textContent =
+    data.justification || "—";
+  document.getElementById("resFallback").style.display =
+    isFallback ? "block" : "none";
+  box.classList.add("visible");
+
+  const log = document.getElementById("llmLog");
+  if (log) {
+    const time = new Date().toLocaleTimeString("fr-FR", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    const label = isFallback ? "Mode démo activé" : "Appel LLM réel — réponse reçue";
+    log.innerHTML += `<br>[${time}] ${label} : ${data.terme_cible} (${data.score_confiance})`;
+    log.scrollTop = log.scrollHeight;
+  }
+}
+
+async function callLLMLive() {
+  const btn = document.getElementById("btnLive");
+  const inner = btn.querySelector(".btn-live-inner");
+  btn.disabled = true;
+  inner.innerHTML = '<span class="llm-spinner"></span> Appel en cours…';
+
+  const TIMEOUT_MS = 6000;
+
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+    const resp = await fetch("/api/llm", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify({
+        term: "TECHNICAL",
+        source: "ALLIED_PATROL",
+        zone: "SECTEUR_B",
+        context:
+          "Présence hostile probable, forces alliées tchadiennes, terme absent du référentiel national français",
+      }),
+    });
+
+    clearTimeout(timer);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    showLiveResult(data, !!data.fallback);
+  } catch (err) {
+    console.warn("LLM live call failed, using fallback:", err.message);
+    showLiveResult(DEMO_FALLBACK, true);
+  } finally {
+    btn.disabled = false;
+    inner.textContent = "🔴 Analyser en direct";
+  }
+}
+
+function callLLMDemo() {
+  showLiveResult(DEMO_FALLBACK, false);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const btnLive = document.getElementById("btnLive");
+  const btnDemo = document.getElementById("btnDemo");
+  if (btnLive) btnLive.addEventListener("click", callLLMLive);
+  if (btnDemo) btnDemo.addEventListener("click", callLLMDemo);
+});
   </script>
 </body>
 </html>
