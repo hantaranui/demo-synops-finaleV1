@@ -3070,6 +3070,14 @@
               </dl>
             </article>
           </div>
+          <div class="llm-mode-wrap" style="margin-top:14px">
+            <button class="btn-live" id="btnLive" type="button">
+              <span class="btn-live-inner">🔴 Analyser en direct</span>
+            </button>
+            <button class="btn-demo" id="btnDemo" type="button">
+              ▶ Mode démo
+            </button>
+          </div>
         </section>
 
         <section class="llm-panel llm-core">
@@ -3114,23 +3122,7 @@
               <strong>OBJECTIF :</strong> proposer une hypothèse sémantique
             </div>
           </div>
-          <div class="llm-mode-wrap">
-  <button class="btn-live" id="btnLive" type="button">
-    <span class="btn-live-inner">🔴 Analyser en direct</span>
-  </button>
-  <button class="btn-demo" id="btnDemo" type="button">
-    ▶ Mode démo
-  </button>
-</div>
-<div class="llm-live-result" id="llmLiveResult">
-  <div class="result-label">RÉSULTAT LLM — TEMPS RÉEL</div>
-  <div class="result-term" id="resTerm">—</div>
-  <div class="result-score" id="resScore">—</div>
-  <div class="result-just" id="resJust">—</div>
-  <div class="result-fallback" id="resFallback" style="display:none">
-    ⚠ Réponse de secours (appel API indisponible)
-  </div>
-</div>
+          
         </section>
 
         <section class="llm-panel">
@@ -3181,7 +3173,15 @@
           </div>
         </section>
       </div>
-
+<div class="llm-live-result" id="llmLiveResult" style="margin:0 0 14px 0">
+        <div class="result-label">RÉSULTAT LLM — TEMPS RÉEL</div>
+        <div class="result-term" id="resTerm">—</div>
+        <div class="result-score" id="resScore">—</div>
+        <div class="result-just" id="resJust">—</div>
+        <div class="result-fallback" id="resFallback" style="display:none">
+          ⚠ Réponse de secours (appel API indisponible)
+        </div>
+      </div>
       <footer class="llm-bottom">
         <div class="llm-actions" aria-label="Vues IA ciblée">
           <button class="llm-btn active" data-llm-mode="technical" type="button">1. Cas TECHNICAL</button>
