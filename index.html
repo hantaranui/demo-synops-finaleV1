@@ -121,7 +121,7 @@
     }
 
     .subtitle {
-      margin-top: 14px;
+      margin-top: 26px;
       max-width: 640px;
       font-size: clamp(24px, 2.7vw, 48px);
       line-height: 1.04;
@@ -227,12 +227,12 @@
       position: absolute;
       z-index: 7;
       left: 50%;
-      bottom: 11vh;
+      top: 13vh;
       width: min(720px, 82vw);
       transform: translate(-50%, 16px);
       opacity: 0;
       color: #f6fbff;
-      font-size: clamp(24px, 2.4vw, 44px);
+      font-size: clamp(22px, 2.2vw, 40px);
       line-height: 1.08;
       font-weight: 950;
       text-align: center;
@@ -419,7 +419,7 @@
       .scene[data-step="1"] .network { margin-top: 96px; }
       .scene[data-step="1"] .energy,
       .scene[data-step="1"] .tactical { margin-top: 10px; }
-      .scene[data-step="1"] .terrain-line { position: relative; left: auto; bottom: auto; width: auto; transform: none; margin: 20px 18px 120px; font-size: 22px; }
+      .scene[data-step="1"] .terrain-line { position: relative; left: auto; top: auto; bottom: auto; width: auto; transform: none; margin: 20px 18px 120px; font-size: 22px; }
       .signal { position: relative; inset: auto; width: auto; margin: 0 18px 10px; }
       .signal-card { min-height: 0; padding: 14px 16px; }
       .signal-term { font-size: 14px; }
@@ -887,7 +887,7 @@
       background: rgba(3, 9, 17, .78);
       box-shadow: 0 0 34px rgba(0, 0, 0, .26);
       backdrop-filter: blur(10px);
-      overflow: hidden;
+      overflow: auto;
     }
 
     .llm-panel h3 {
@@ -902,8 +902,8 @@
     .signal-stack,
     .out-stack {
       display: grid;
-      gap: 12px;
-      padding: 16px;
+      gap: 10px;
+      padding: 14px;
     }
 
     .ambiguity-card,
@@ -980,8 +980,8 @@
 
     .llm-core {
       display: grid;
-      grid-template-rows: auto auto 1fr;
-      gap: 12px;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 10px;
       padding: 16px;
     }
 
@@ -1058,7 +1058,31 @@
         radial-gradient(circle at 50% 0, rgba(255, 157, 54, .16), transparent 44%),
         rgba(2, 6, 12, .74);
       box-shadow: inset 0 0 32px rgba(255, 157, 54, .04);
-      overflow: hidden;
+      overflow: auto;
+    }
+
+    .llm-live-zone {
+      display: grid;
+      gap: 8px;
+      align-content: start;
+    }
+
+    .llm-call-label {
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 157, 54, .26);
+      border-radius: 8px;
+      background: rgba(255, 157, 54, .07);
+      color: var(--sand);
+      font: 950 clamp(12px, .85vw, 15px) / 1.45 var(--mono);
+      letter-spacing: .8px;
+      text-transform: uppercase;
+    }
+
+    .llm-call-label span {
+      display: block;
+      color: #eaf4ff;
+      font-size: .86em;
+      letter-spacing: .6px;
     }
 
     .question-label {
@@ -1080,7 +1104,7 @@
 
     .pivot-center {
       color: #fff6e8;
-      font: 900 clamp(11px, .74vw, 13px) / 1.32 var(--mono);
+      font: 900 clamp(10px, .7vw, 12px) / 1.28 var(--mono);
     }
 
     .pivot-center-title {
@@ -1111,7 +1135,7 @@
     }
 
     .answer-card {
-      padding: 14px;
+      padding: 12px;
       opacity: .44;
       transition: .24s ease;
     }
@@ -1136,7 +1160,7 @@
     }
 
     .pivot-card {
-      padding: 16px;
+      padding: 12px;
       border-color: rgba(91, 220, 255, .28);
       background: rgba(0, 0, 0, .24);
       opacity: .55;
@@ -1169,7 +1193,7 @@
 
     .pivot-data {
       color: #f5fbff;
-      font: 850 clamp(12px, .82vw, 14px) / 1.45 var(--mono);
+      font: 850 clamp(11px, .76vw, 13px) / 1.34 var(--mono);
     }
 
     .pivot-data strong {
@@ -1183,7 +1207,7 @@
       background: rgba(94, 228, 139, .08);
       color: #eafff0;
       text-align: center;
-      font-size: clamp(18px, 1.3vw, 24px);
+      font-size: clamp(16px, 1.1vw, 21px);
       font-weight: 950;
     }
 
@@ -1250,10 +1274,10 @@
       overflow: hidden;
       padding: 22px;
       background:
-        radial-gradient(circle at 49% 46%, rgba(94, 228, 139, .11), transparent 24%),
-        radial-gradient(circle at 76% 34%, rgba(255, 157, 54, .09), transparent 26%),
-        linear-gradient(180deg, rgba(2, 6, 12, .98), rgba(3, 8, 15, .97)),
-        url("assets/fond.png") center / cover no-repeat;
+        radial-gradient(circle at 35% 48%, rgba(255, 157, 54, .22), transparent 28%),
+        radial-gradient(circle at 78% 38%, rgba(91, 220, 255, .14), transparent 26%),
+        linear-gradient(180deg, rgba(2, 6, 12, .72), rgba(3, 8, 15, .94)),
+        url("assets/sahel-poste-avance.png") center / cover no-repeat;
     }
 
     .grist-page::before {
@@ -1262,9 +1286,10 @@
       inset: 0;
       pointer-events: none;
       background-image:
+        linear-gradient(90deg, rgba(2, 6, 12, .66), rgba(2, 6, 12, .28) 45%, rgba(2, 6, 12, .72)),
         linear-gradient(rgba(94, 228, 139, .035) 1px, transparent 1px),
         linear-gradient(90deg, rgba(91, 220, 255, .03) 1px, transparent 1px);
-      background-size: 56px 56px;
+      background-size: auto, 56px 56px, 56px 56px;
     }
 
     .grist-shell {
@@ -1311,7 +1336,7 @@
       min-height: 0;
       border: 1px solid rgba(91, 220, 255, .22);
       border-radius: 10px;
-      background: rgba(3, 9, 17, .78);
+      background: rgba(3, 9, 17, .68);
       box-shadow: 0 0 34px rgba(0, 0, 0, .26);
       backdrop-filter: blur(10px);
       overflow: hidden;
@@ -2537,7 +2562,7 @@
     .poster-title h2 {
       margin: 4px 0 2px;
       color: #202018;
-      font-size: clamp(44px, 5.2vw, 104px);
+      font-size: clamp(40px, 4.65vw, 88px);
       line-height: .9;
       letter-spacing: 2px;
       text-shadow: 2px 2px 0 rgba(255, 255, 255, .28);
@@ -2552,13 +2577,14 @@
 
     .poster-stamp {
       transform: rotate(7deg);
-      padding: 10px 14px;
-      border: 3px solid #8d2f24;
+      max-width: 360px;
+      padding: 7px 11px;
+      border: 2px solid #8d2f24;
       border-radius: 6px;
       color: #8d2f24;
       background: rgba(255, 255, 255, .24);
-      font: 950 clamp(12px, .95vw, 16px) / 1.25 var(--mono);
-      letter-spacing: 1px;
+      font: 950 clamp(10px, .78vw, 13px) / 1.18 var(--mono);
+      letter-spacing: .7px;
       text-align: center;
     }
 
@@ -2621,16 +2647,16 @@
       min-height: 0;
       display: grid;
       grid-template-rows: auto auto 1fr auto;
-      gap: 12px;
+      gap: 10px;
     }
 
     .poster-lead {
-      padding: 12px 16px;
+      padding: 8px 14px;
       border: 2px dashed rgba(52, 52, 33, .42);
       border-radius: 8px;
       background: rgba(255, 255, 255, .28);
-      font-size: clamp(18px, 1.35vw, 27px);
-      line-height: 1.23;
+      font-size: clamp(16px, 1.15vw, 22px);
+      line-height: 1.18;
       font-weight: 900;
       text-align: center;
     }
@@ -2656,7 +2682,7 @@
 
     .poster-block,
     .coach-block {
-      padding: 13px 15px;
+      padding: 11px 13px;
       border: 2px solid rgba(52, 52, 33, .54);
       border-radius: 8px;
       background: rgba(255, 252, 235, .46);
@@ -2664,15 +2690,15 @@
 
     .poster-block h3,
     .coach-block h3 {
-      margin: 0 0 8px;
+      margin: 0 0 9px;
       color: #4c562f;
-      font: 950 clamp(15px, 1vw, 20px) var(--mono);
+      font: 950 clamp(14px, .95vw, 18px) var(--mono);
       letter-spacing: 1px;
       text-transform: uppercase;
     }
 
     .poster-block ul {
-      margin: 0;
+      margin: 14px 0 0;
       padding-left: 1.05em;
       font-size: clamp(13px, .85vw, 16px);
       line-height: 1.34;
@@ -2682,15 +2708,20 @@
     .poster-block p,
     .coach-block p {
       margin: 0;
-      font-size: clamp(13px, .86vw, 16px);
-      line-height: 1.38;
+      font-size: clamp(12px, .78vw, 14px);
+      line-height: 1.28;
       font-weight: 820;
     }
 
+    .poster-block p + p,
+    .coach-block p + p {
+      margin-top: 8px;
+    }
+
     .coach-names {
-      margin: 8px 0;
+      margin: 6px 0;
       color: #8d2f24;
-      font: 950 clamp(16px, 1vw, 21px) var(--mono);
+      font: 950 clamp(15px, .95vw, 19px) var(--mono);
       letter-spacing: .7px;
     }
 
@@ -2704,9 +2735,13 @@
       text-transform: uppercase;
     }
 
+    .poster-final span {
+      display: block;
+    }
+
     .poster-bottom {
       display: grid;
-      grid-template-columns: auto 1fr auto auto;
+      grid-template-columns: auto 1fr auto;
       gap: 12px;
       align-items: center;
     }
@@ -2741,6 +2776,19 @@
       text-transform: uppercase;
     }
 
+    #descentPage .multi-bottom {
+      grid-template-columns: auto 1fr auto;
+    }
+
+    #descentPage #descentPrev {
+      justify-self: start;
+    }
+
+    #descentPage #descentNext {
+      justify-self: end;
+      box-shadow: 0 0 24px rgba(255, 157, 54, .18);
+    }
+
     @media (max-width: 1100px) {
       .tech-page { overflow: auto; }
       .tech-shell { height: auto; min-height: 100%; grid-template-columns: 1fr; }
@@ -2773,94 +2821,117 @@
       .poster-bottom { grid-template-columns: 1fr; }
     }
     .llm-mode-wrap {
-  display: flex;
-  gap: 10px;
-  margin-top: 14px;
-  align-items: center;
-  flex-wrap: wrap;
-}
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-items: center;
+    }
 
-.btn-live {
-  padding: 9px 20px;
-  background: #ff4444;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-}
-.btn-live:hover { background: #ff2222; transform: translateY(-1px); }
-.btn-live:disabled { background: #555; cursor: not-allowed; transform: none; }
+    .btn-live,
+    .btn-demo {
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 5px;
+      font-weight: 950;
+      font-size: clamp(12px, .86vw, 15px);
+      cursor: pointer;
+      letter-spacing: .4px;
+      transition: all .2s;
+    }
 
-.btn-demo {
-  padding: 9px 20px;
-  background: transparent;
-  color: #5bdcff;
-  border: 1px solid rgba(91, 220, 255, 0.35);
-  border-radius: 4px;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  letter-spacing: 0.5px;
-  transition: all 0.2s;
-}
-.btn-demo:hover { border-color: #5bdcff; background: rgba(91,220,255,0.06); }
+    .btn-live {
+      border: 1px solid rgba(255, 111, 82, .62);
+      background: rgba(255, 111, 82, .16);
+      color: #fff2ee;
+      box-shadow: 0 0 20px rgba(255, 111, 82, .1);
+    }
 
-.llm-live-result {
-  margin-top: 14px;
-  padding: 14px 16px;
-  background: rgba(91, 220, 255, 0.05);
-  border: 1px solid rgba(91, 220, 255, 0.2);
-  border-radius: 6px;
-  font-size: 13px;
-  line-height: 1.6;
-  display: none;
-}
-.llm-live-result.visible { display: block; }
-.llm-live-result .result-label {
-  font-family: var(--mono);
-  font-size: 10px;
-  color: #5bdcff;
-  letter-spacing: 1px;
-  margin-bottom: 7px;
-}
-.llm-live-result .result-term {
-  font-size: 16px;
-  font-weight: 800;
-  color: #5bdcff;
-  margin-bottom: 4px;
-}
-.llm-live-result .result-score {
-  font-family: var(--mono);
-  font-size: 13px;
-  color: #b8c3cf;
-  margin-bottom: 8px;
-}
-.llm-live-result .result-just {
-  color: #b8c3cf;
-  font-style: italic;
-}
-.llm-live-result .result-fallback {
-  margin-top: 8px;
-  font-size: 11px;
-  color: #888;
-}
-.llm-spinner {
-  display: inline-block;
-  width: 14px;
-  height: 14px;
-  border: 2px solid rgba(255,255,255,0.3);
-  border-top-color: #fff;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
+    .btn-live:hover {
+      background: rgba(255, 111, 82, .26);
+      transform: translateY(-1px);
+    }
+
+    .btn-live:disabled {
+      background: rgba(255, 255, 255, .08);
+      color: var(--muted);
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-demo {
+      border: 1px solid rgba(91, 220, 255, .36);
+      background: rgba(91, 220, 255, .08);
+      color: var(--cyan);
+    }
+
+    .btn-demo:hover {
+      border-color: rgba(91, 220, 255, .7);
+      background: rgba(91, 220, 255, .14);
+    }
+
+    .llm-live-result {
+      min-height: 112px;
+      padding: 14px 16px;
+      border: 1px solid rgba(91, 220, 255, .24);
+      border-radius: 8px;
+      background:
+        linear-gradient(135deg, rgba(91, 220, 255, .08), rgba(255, 157, 54, .05)),
+        rgba(0, 0, 0, .2);
+      font-size: 13px;
+      line-height: 1.5;
+      display: none;
+      overflow: auto;
+    }
+
+    .llm-live-result.visible {
+      display: block;
+    }
+
+    .llm-live-result .result-label {
+      font-family: var(--mono);
+      font-size: 10px;
+      color: var(--cyan);
+      letter-spacing: 1.4px;
+      margin-bottom: 7px;
+    }
+
+    .llm-live-result .result-term {
+      font-size: clamp(17px, 1.2vw, 23px);
+      font-weight: 950;
+      color: var(--cyan);
+      margin-bottom: 4px;
+    }
+
+    .llm-live-result .result-score {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--sand);
+      margin-bottom: 8px;
+    }
+
+    .llm-live-result .result-just {
+      color: #eaf4ff;
+      font-style: italic;
+      font-weight: 800;
+    }
+
+    .llm-live-result .result-fallback {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .llm-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(255, 255, 255, .3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
   </style>
 </head>
 <body>
@@ -3070,14 +3141,6 @@
               </dl>
             </article>
           </div>
-          <div class="llm-mode-wrap" style="margin-top:14px">
-            <button class="btn-live" id="btnLive" type="button">
-              <span class="btn-live-inner">🔴 Analyser en direct</span>
-            </button>
-            <button class="btn-demo" id="btnDemo" type="button">
-              ▶ Mode démo
-            </button>
-          </div>
         </section>
 
         <section class="llm-panel llm-core">
@@ -3111,6 +3174,27 @@
             </div>
           </div>
 
+          <div class="llm-live-zone">
+            <div class="llm-call-label">Appel LLM ciblé<span>Démo : OpenAI</span><span>Cible : Mistral / LLM souverain</span></div>
+            <div class="llm-mode-wrap">
+              <button class="btn-live" id="btnLive" type="button">
+                <span class="btn-live-inner">Analyser en direct</span>
+              </button>
+              <button class="btn-demo" id="btnDemo" type="button">
+                Mode démo
+              </button>
+            </div>
+            <div class="llm-live-result" id="llmLiveResult">
+              <div class="result-label">RÉSULTAT LLM — TEMPS RÉEL</div>
+              <div class="result-term" id="resTerm">—</div>
+              <div class="result-score" id="resScore">—</div>
+              <div class="result-just" id="resJust">—</div>
+              <div class="result-fallback" id="resFallback" style="display:none">
+                Réponse de secours (appel API indisponible)
+              </div>
+            </div>
+          </div>
+
           <div class="question-box">
             <div class="question-label" id="llmQuestionLabel">Extrait filtré transmis au LLM</div>
             <div class="question-text" id="llmQuestion">
@@ -3122,12 +3206,12 @@
               <strong>OBJECTIF :</strong> proposer une hypothèse sémantique
             </div>
           </div>
-          
         </section>
 
         <section class="llm-panel">
           <h3>Sortie pivot structurée</h3>
           <div class="out-stack">
+            <div class="human-note">Hypothèse générée. Validation humaine requise.</div>
             <article class="answer-card answer-technical active" data-answer="technical">
               <div class="answer-top">
                 <div class="answer-title">TECHNICAL — 0.74</div>
@@ -3148,6 +3232,7 @@
               <ul class="answer-lines">
                 <li>contradiction SIGINT possible</li>
                 <li>investigation analyste</li>
+                <li>STATUT : NO-GO</li>
                 <li>ne suffit pas à engager une action</li>
               </ul>
             </article>
@@ -3165,22 +3250,11 @@
                 <strong>CONFIANCE :</strong> 0.78<br><br>
                 <strong>POINTS OUVERTS :</strong><br>
                 TECHNICAL → validation interalliée requise<br>
-                BRAVO_SECURE → contradiction à investiguer
+                BRAVO_SECURE → STATUT : NO-GO · contradiction à investiguer
               </div>
             </article>
-
-            <div class="human-note">Hypothèse générée. Validation humaine requise.</div>
           </div>
         </section>
-      </div>
-<div class="llm-live-result" id="llmLiveResult" style="margin:0 0 14px 0">
-        <div class="result-label">RÉSULTAT LLM — TEMPS RÉEL</div>
-        <div class="result-term" id="resTerm">—</div>
-        <div class="result-score" id="resScore">—</div>
-        <div class="result-just" id="resJust">—</div>
-        <div class="result-fallback" id="resFallback" style="display:none">
-          ⚠ Réponse de secours (appel API indisponible)
-        </div>
       </div>
       <footer class="llm-bottom">
         <div class="llm-actions" aria-label="Vues IA ciblée">
@@ -3189,7 +3263,7 @@
           <button class="llm-btn" data-llm-mode="pivot" type="button">3. Sortie pivot B-01</button>
         </div>
         <button class="llm-next" type="button">Page suivante : Validation dans Grist →</button>
-        <div class="llm-log" id="llmLog">[14:25] Appel LLM ciblé sur TECHNICAL — extrait filtré transmis.</div>
+        <div class="llm-log" id="llmLog">[14:25] Appel LLM ciblé — Démo : OpenAI · Cible : Mistral / LLM souverain.</div>
       </footer>
     </div>
   </section>
@@ -3532,9 +3606,9 @@
             </div>
             <div class="poster-block">
               <h3>Remerciements</h3>
-              <p>Merci aux organisatrices et organisateurs du hackathon Women in Gen AI 2026.</p>
-              <p>Merci à Julie, Mariama et Noura pour l'accompagnement, l'énergie et la confiance.</p>
-              <p>Merci aux partenaires pour les retours, les échanges et l'opportunité de travailler sur un cas aussi exigeant.</p>
+              <p>Merci aux organisateur·ices du hackathon Women in Gen AI 2026, aux partenaires, à Julie, Mariama et Noura pour l'accompagnement.</p>
+              <p>Merci au Ministère des armées pour les retours, les échanges et l'opportunité de travailler sur un cas d'usage aussi exigeant.</p>
+              <p>Merci à nos responsables et collègues chez au carré pour leur soutien, leurs encouragements et leurs conseils tout au long du hackathon.</p>
             </div>
           </div>
 
@@ -3549,8 +3623,7 @@
 
       <footer class="poster-bottom">
         <button class="poster-nav" id="posterPrev" type="button">← Page précédente : Conclusion</button>
-        <div class="poster-final">La donnée reste traçable. Le sens devient partageable. La décision reste humaine.</div>
-        <button class="poster-nav subtle" type="button">Annexes Q/R</button>
+        <div class="poster-final"><span>La donnée reste traçable. Le sens devient partageable.</span><span>La décision reste humaine.</span></div>
         <button class="poster-nav" id="posterHome" type="button">Revenir à l'accueil</button>
       </footer>
     </div>
@@ -3663,16 +3736,23 @@
         sources: ["drone", "terre", "allies", "sigint"],
       },
       {
+        badge: "Fusion globale inter-sources",
+        text: "SynOps fusionne les informations utiles avant de décider si une IA ciblée est nécessaire.",
+        resultHtml: `<div class="result-grid"><div class="result-col"><b>Chaîne tactique</b>01 Regroupement B-01<br>02 Règles locales<br>03 Référentiel local<br>04 Fusion globale inter-sources<br>05 IA ciblée si nécessaire</div><div class="result-col"><b>Fusion globale</b><ul class="result-list"><li>convergences détectées</li><li>informations complémentaires</li><li>contradictions potentielles</li></ul></div></div>`,
+        journal: "[14:24] Fusion globale inter-sources appliquée.",
+        sources: ["drone", "terre", "allies", "sigint"],
+      },
+      {
         badge: "LLM local / maîtrisé",
         text: "Les cas connus passent par les règles. Les cas ambigus sont orientés vers une IA ciblée.",
-        resultHtml: `<div class="result-grid"><div class="result-col"><b>Règles / référentiel</b>HOSTILE_MOVEMENT → présence hostile<br>ENGAGEMENT_APPUI_FEU → demande tir appui</div><div class="result-col"><b>LLM ciblé</b>TECHNICAL → terme allié ambigu<br>BRAVO_SECURE → contradiction possible</div></div>`,
+        resultHtml: `<div class="result-grid"><div class="result-col"><b>Règles / référentiel</b>HOSTILE_MOVEMENT → présence hostile<br>ENGAGEMENT_APPUI_FEU → demande tir appui</div><div class="result-col"><b>LLM ciblé</b>TECHNICAL → terme allié ambigu<br>BRAVO_SECURE → contradiction possible · STATUT : NO-GO</div></div>`,
         journal: "[14:25] LLM appelé uniquement sur TECHNICAL et BRAVO_SECURE.",
         sources: ["drone", "terre", "allies", "sigint"],
       },
       {
         badge: "Validation humaine obligatoire",
         text: "SynOps prépare une lecture structurée pour l'analyste opérationnel.",
-        result: "Présence hostile — 0.78 — à valider\nDemande tir appui — 0.91 — à valider\nTECHNICAL — 0.74 — validation interalliée requise\nBRAVO_SECURE — 0.35 — investigation analyste",
+        result: "Présence hostile — 0.78 — à valider\nDemande tir appui — 0.91 — à valider\nTECHNICAL — 0.74 — validation interalliée requise\nBRAVO_SECURE — 0.35 — STATUT : NO-GO — investigation analyste",
         journal: "[14:26] Sortie structurée prête pour validation.",
         sources: ["drone", "terre", "allies", "sigint"],
       },
@@ -3718,7 +3798,7 @@
 
     const qaContent = {
       in: "Messages terrain hétérogènes : source · zone · terme · urgence · fiabilité · horodatage · sensibilité",
-      route: "Terme connu → règles / référentiel · Terme ambigu → LLM local ou maîtrisé · Synthèse filtrée → niveau opératif ensuite",
+      route: "Regroupement B-01 → règles locales → référentiel local → fusion globale inter-sources → IA ciblée si nécessaire",
       out: "Proposition · score · explication · statut · validation requise",
     };
     document.querySelectorAll(".qa-btn").forEach((button) => {
@@ -3734,7 +3814,7 @@
         label: "Extrait filtré transmis au LLM",
         excerpt: `<strong>TERME :</strong> TECHNICAL<br><strong>SOURCE :</strong> ALLIED_PATROL<br><strong>ZONE :</strong> SECTEUR_B<br><strong>CONTEXTE :</strong> présence hostile probable<br><strong>FIABILITÉ :</strong> moyenne<br><strong>OBJECTIF :</strong> proposer une hypothèse sémantique`,
         log: [
-          "[14:25] Appel LLM ciblé sur TECHNICAL — extrait filtré transmis.",
+          "[14:25] Appel LLM ciblé — Démo : OpenAI · Cible : Mistral / LLM souverain.",
           "[14:25] Hypothèse générée : véhicule léger armé probable.",
         ],
       },
@@ -3747,9 +3827,9 @@
       },
       pivot: {
         label: "Sortie pivot structurée",
-        excerpt: `<div class="pivot-center"><div class="pivot-center-title">SORTIE PIVOT — INCIDENT B-01</div><strong>NIVEAU :</strong> tactique<br><strong>ZONE :</strong> SECTEUR_B<br><strong>FENÊTRE :</strong> 14h21Z–14h26Z<br><strong>STATUT :</strong> À_VALIDER<br><strong>DESTINATION :</strong> Grist / analyste opérationnel<div class="pivot-center-section">Éléments structurés :</div>PRÉSENCE_HOSTILE_PROBABLE — à valider — 0.78<br>DEMANDE_TIR_APPUI — à valider — 0.91<br>VÉHICULE_LÉGER_ARMÉ / TECHNICAL — validation interalliée — 0.74<br>CONTRADICTION_SIGINT — investigation analyste — 0.35<div class="mim-line">Compatible logique MIM · Validation humaine requise.</div></div>`,
+        excerpt: `<div class="pivot-center"><div class="pivot-center-title">SORTIE PIVOT — INCIDENT B-01</div><strong>NIVEAU :</strong> tactique<br><strong>ZONE :</strong> SECTEUR_B<br><strong>FENÊTRE :</strong> 14h21Z–14h26Z<br><strong>STATUT :</strong> À_VALIDER<br><strong>DESTINATION :</strong> Grist / analyste opérationnel<div class="pivot-center-section">Éléments structurés :</div>PRÉSENCE_HOSTILE_PROBABLE — à valider — 0.78<br>DEMANDE_TIR_APPUI — à valider — 0.91<br>VÉHICULE_LÉGER_ARMÉ / TECHNICAL — validation interalliée — 0.74<br>CONTRADICTION_SIGINT — STATUT : NO-GO — investigation analyste — 0.35<div class="mim-line">Compatible logique MIM · Validation humaine requise.</div></div>`,
         log: [
-          "[14:25] Appel LLM ciblé sur TECHNICAL — extrait filtré transmis.",
+          "[14:25] Appel LLM ciblé — Démo : OpenAI · Cible : Mistral / LLM souverain.",
           "[14:25] Hypothèse générée : véhicule léger armé probable.",
           "[14:26] Analyse BRAVO_SECURE — contradiction possible détectée.",
           "[14:26] Sortie pivot B-01 préparée pour validation humaine.",
@@ -3836,7 +3916,7 @@
         title: "BRAVO_SECURE",
         status: "investigation analyste",
         explanation: "contradiction possible avec le signal Drone ISR.",
-        detail: `<h4>Alerte</h4><strong>BRAVO_SECURE</strong><div class="case-summary"><div><strong>Statut :</strong> contradiction SIGINT possible<br>investigation analyste requise</div></div>`,
+        detail: `<h4>Alerte</h4><strong>BRAVO_SECURE</strong><div class="case-summary"><div><strong>Statut :</strong> NO-GO<br>contradiction SIGINT possible<br>investigation analyste requise</div><div><strong>Effet :</strong> ne suffit pas à engager une action</div></div>`,
         capitalisationBlocked: true,
         logs: {
           "Valider": "[14:29] BRAVO_SECURE vérifié par analyste.",
@@ -4169,7 +4249,7 @@ async function callLLMLive() {
     showLiveResult(DEMO_FALLBACK, true);
   } finally {
     btn.disabled = false;
-    inner.textContent = "🔴 Analyser en direct";
+    inner.textContent = "Analyser en direct";
   }
 }
 
